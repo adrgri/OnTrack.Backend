@@ -1,25 +1,33 @@
-WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+﻿using OnTrack.Backend.Api;
 
-// Add services to the container.
-builder.Services.AddControllers();
+using Serilog;
+using Serilog.Debugging;
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-WebApplication app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+try
 {
-    _ = app.UseSwagger();
-    _ = app.UseSwaggerUI();
+	SelfLog.Enable(Console.WriteLine);
+
+	WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+	builder.AddConfigurationSources();
+
+	ILogger<Program> logger = builder.ConfigureLogger();
+
+	builder.ConfigureOptions(logger);
+	builder.ConfigureServices(logger);
+	builder.ConfigureDependencies(logger);
+	builder.ConfigureWebHost(logger);
+
+	WebApplication app = builder.BuildApplication(logger);
+
+	app.ConfigureRequestPipeline(logger);
+
+	app.SanityCheck(logger);
+
+	app.Run(logger);
 }
-
-app.UseHttpsRedirection();
-
-app.UseAuthorization();
-
-app.MapControllers();
-
-app.Run();
+finally
+{
+	Log.Information("Disposing the logger.");
+	Log.CloseAndFlush();
+}

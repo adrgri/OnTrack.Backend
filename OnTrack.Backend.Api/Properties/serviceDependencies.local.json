@@ -1,0 +1,26 @@
+{
+  "dependencies": {
+    "mssql1": {
+      "serviceConnectorResourceId": "",
+      "secretStore": "LocalSecretsFile",
+      "resourceId": null,
+      "type": "mssql.onprem",
+      "connectionId": "ConnectionStrings:SqlDatabase"
+    },
+    "mssql2": {
+      "serviceConnectorResourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.ServiceLinker/locations/westus/connectors/ConnectionStringsAzureSqlDatabase_7B8F908650",
+      "secretStore": "LocalSecretsFile",
+      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.Sql/servers/adrgri-dbms/databases/OnTrackDatabase",
+      "type": "mssql.azure",
+      "connectionId": "ConnectionStrings:AzureSqlDatabase"
+    },
+    "appInsights1": {
+      "type": "appInsights.sdk",
+      "dynamicId": null
+    },
+    "apis1": {
+      "ignored": "True",
+      "type": "apis"
+    }
+  }
+}
