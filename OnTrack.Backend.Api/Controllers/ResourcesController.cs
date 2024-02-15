@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 
 using OnTrack.Backend.Api.Data;
+using OnTrack.Backend.Api.Dto;
 using OnTrack.Backend.Api.Models;
 
 namespace OnTrack.Backend.Api.Controllers;
@@ -19,11 +20,11 @@ public class ResourcesController(ILogger<StatusesController> logger, Application
 	}
 
 	[HttpPost]
-	[ProducesResponseType(StatusCodes.Status200OK), ProducesResponseType(StatusCodes.Status201Created)]
+	[ProducesResponseType(StatusCodes.Status201Created)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
-	public async Task<ActionResult<Resource>> PostResource(Resource resource)
+	public async Task<ActionResult<Resource>> PostResource(CreateResourceDto createResourceDto)
 	{
-		Status status = createStatusDto.ToDomainModel();
+		Resource resource = createResourceDto.ToDomainModel();
 
 		_ = _context.Resources.Add(resource);
 		_ = await _context.SaveChangesAsync();

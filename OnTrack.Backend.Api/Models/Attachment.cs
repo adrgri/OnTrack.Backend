@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace OnTrack.Backend.Api.Models;
 
 [EntityTypeConfiguration<AttachmentIdConfiguration, Attachment>()]
-public sealed class Attachment : IEntity<AttachmentId>
+public sealed record class Attachment : IEntity<AttachmentId>
 {
 	public AttachmentId Id { get; init; }
 	public string DisplayName { get; set; }
@@ -18,7 +18,7 @@ public sealed class Attachment : IEntity<AttachmentId>
 [JsonConverter(typeof(StronglyTypedIdJsonConverter<AttachmentId>))]
 public sealed record class AttachmentId : StronglyTypedId;
 
-public sealed class AttachmentIdConfiguration : EntityStronglyTypedIdConfiguration<AttachmentId, Attachment>
+public sealed class AttachmentIdConfiguration : StronglyTypedIdEntityConfiguration<AttachmentId, Attachment>
 {
 	public override void Configure(EntityTypeBuilder<Attachment> builder)
 	{

@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace OnTrack.Backend.Api.Models;
 
 [EntityTypeConfiguration<IconConfiguration, Icon>()]
-public sealed class Icon : IEntity<IconId>
+public sealed record class Icon : IEntity<IconId>
 {
 	public IconId Id { get; init; }
 	public string Name { get; set; }
@@ -18,7 +18,7 @@ public sealed class Icon : IEntity<IconId>
 [JsonConverter(typeof(StronglyTypedIdJsonConverter<IconId>))]
 public sealed record class IconId : StronglyTypedId;
 
-public sealed class IconConfiguration : EntityStronglyTypedIdConfiguration<IconId, Icon>
+public sealed class IconConfiguration : StronglyTypedIdEntityConfiguration<IconId, Icon>
 {
 	public override void Configure(EntityTypeBuilder<Icon> builder)
 	{

@@ -19,11 +19,11 @@ public class AttachmentsController(ILogger<StatusesController> logger, Applicati
 	}
 
 	[HttpPost]
-	[ProducesResponseType(StatusCodes.Status200OK), ProducesResponseType(StatusCodes.Status201Created)]
+	[ProducesResponseType(StatusCodes.Status201Created)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
 	public async Task<ActionResult<Attachment>> PostAttachment(Attachment attachment)
 	{
-		Status status = createStatusDto.ToDomainModel();
+		//Status status = createStatusDto.ToDomainModel();
 
 		_ = _context.Attachments.Add(attachment);
 		_ = await _context.SaveChangesAsync();

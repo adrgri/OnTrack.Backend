@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace OnTrack.Backend.Api.Models;
 
 [EntityTypeConfiguration<ProjectConfiguration, Project>()]
-public sealed class Project : IEntity<ProjectId>
+public sealed record class Project : IEntity<ProjectId>
 {
 	public ProjectId Id { get; init; }
 	public string Title { get; set; }
@@ -27,7 +27,7 @@ public sealed class Project : IEntity<ProjectId>
 [JsonConverter(typeof(StronglyTypedIdJsonConverter<ProjectId>))]
 public sealed record class ProjectId : StronglyTypedId;
 
-public sealed class ProjectConfiguration : EntityStronglyTypedIdConfiguration<ProjectId, Project>
+public sealed class ProjectConfiguration : StronglyTypedIdEntityConfiguration<ProjectId, Project>
 {
 	public override void Configure(EntityTypeBuilder<Project> builder)
 	{

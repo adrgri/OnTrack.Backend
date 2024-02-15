@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace OnTrack.Backend.Api.Models;
 
 /*/ This class can not be abstract since EF Core must be able to create instances of it (if you don't create concrete child classes anywhere) /*/
-public class EntityStronglyTypedIdConfiguration<TEntityId, TEntity> : IStronglyTypedIdConverter<TEntityId>, IEntityTypeConfiguration<TEntity>
+public class StronglyTypedIdEntityConfiguration<TEntityId, TEntity> : IStronglyTypedIdConverter<TEntityId>, IEntityTypeConfiguration<TEntity>
 	where TEntityId : IStronglyTypedId, new()
 	where TEntity : class, IEntity<TEntityId>
 {

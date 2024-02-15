@@ -5,8 +5,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace OnTrack.Backend.Api.Models;
 
-[EntityTypeConfiguration<EntityStronglyTypedIdConfiguration<MilestoneId, Milestone>, Milestone>()]
-public sealed class Milestone : IEntity<MilestoneId>
+[EntityTypeConfiguration<StronglyTypedIdEntityConfiguration<MilestoneId, Milestone>, Milestone>()]
+public sealed record class Milestone : IEntity<MilestoneId>
 {
 	public MilestoneId Id { get; init; }
 	public Project Project { get; set; }
@@ -19,5 +19,3 @@ public sealed class Milestone : IEntity<MilestoneId>
 [TypeConverter(typeof(StronglyTypedIdTypeConverter<MilestoneId>))]
 [JsonConverter(typeof(StronglyTypedIdJsonConverter<MilestoneId>))]
 public sealed record class MilestoneId : StronglyTypedId;
-
-//public sealed class MilestoneConfiguration : EntityStronglyTypedIdConfiguration<MilestoneId, Milestone>;

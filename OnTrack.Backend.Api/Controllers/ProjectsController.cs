@@ -20,11 +20,11 @@ public class ProjectsController(ILogger<StatusesController> logger, ApplicationD
 	}
 
 	[HttpPost]
-	[ProducesResponseType(StatusCodes.Status200OK), ProducesResponseType(StatusCodes.Status201Created)]
+	[ProducesResponseType(StatusCodes.Status201Created)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
-	public async Task<ActionResult<Project>> PostProject(Project project)
+	public async Task<ActionResult<Project>> PostProject(CreateProjectDto createProjectDto)
 	{
-		Status status = createStatusDto.ToDomainModel();
+		Project project = createProjectDto.ToDomainModel();
 
 		_ = _context.Projects.Add(project);
 		_ = await _context.SaveChangesAsync();

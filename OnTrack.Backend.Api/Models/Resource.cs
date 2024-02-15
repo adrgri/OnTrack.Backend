@@ -5,8 +5,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace OnTrack.Backend.Api.Models;
 
-[EntityTypeConfiguration<EntityStronglyTypedIdConfiguration<ResourceId, Resource>, Resource>()]
-public sealed class Resource : IEntity<ResourceId>
+[EntityTypeConfiguration<StronglyTypedIdEntityConfiguration<ResourceId, Resource>, Resource>()]
+public sealed record class Resource : IEntity<ResourceId>
 {
 	public ResourceId Id { get; init; }
 	public string Name { get; set; }
@@ -19,4 +19,3 @@ public sealed class Resource : IEntity<ResourceId>
 [JsonConverter(typeof(StronglyTypedIdJsonConverter<ResourceId>))]
 public sealed record class ResourceId : StronglyTypedId;
 
-//public sealed class ResourceConfiguration : EntityStronglyTypedIdConfiguration<ResourceId, Resource>;

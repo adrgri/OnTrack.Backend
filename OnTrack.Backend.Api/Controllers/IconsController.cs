@@ -20,11 +20,11 @@ public class IconsController(ILogger<StatusesController> logger, ApplicationDbCo
 	}
 
 	[HttpPost]
-	[ProducesResponseType(StatusCodes.Status200OK), ProducesResponseType(StatusCodes.Status201Created)]
+	[ProducesResponseType(StatusCodes.Status201Created)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
 	public async Task<ActionResult<Icon>> PostIcon(Icon icon)
 	{
-		Status status = createStatusDto.ToDomainModel();
+		//Status status = createStatusDto.ToDomainModel();
 
 		_ = _context.Icons.Add(icon);
 		_ = await _context.SaveChangesAsync();

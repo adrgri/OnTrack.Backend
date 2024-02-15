@@ -2,7 +2,7 @@
 
 namespace OnTrack.Backend.Api.Dto;
 
-public class CreateLanguageDto : IDto<Language>
+public sealed record class CreateLanguageDto : IDto<Language>
 {
 	public string Code { get; set; }
 	public string Name { get; set; }

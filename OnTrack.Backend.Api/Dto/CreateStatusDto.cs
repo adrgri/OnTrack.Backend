@@ -2,7 +2,7 @@
 
 namespace OnTrack.Backend.Api.Dto;
 
-public class CreateStatusDto : IDto<Status>
+public sealed record class CreateStatusDto : IDto<Status>
 {
 	public string Name { get; set; }
 

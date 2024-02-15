@@ -7,7 +7,7 @@ using OnTrack.Backend.Api.Models;
 namespace OnTrack.Backend.Api.Controllers;
 
 [ApiController, Route("/api/identity")]
-public sealed class ApplicationUserController(SignInManager<ApplicationUser> signInManager)
+public sealed class IdentityController(SignInManager<ApplicationUser> signInManager)
 	: Controller
 {
 	private readonly SignInManager<ApplicationUser> _signInManager = signInManager;
@@ -44,7 +44,7 @@ using Task = System.Threading.Tasks.Task;
 namespace OnTrack.Backend.Api.Controllers;
 
 [ApiController, Route("/api/identity")]
-public sealed class ApplicationUserController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, IUserEmailStore<ApplicationUser> emailStore)
+public sealed class IdentityController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, IUserEmailStore<ApplicationUser> emailStore)
 	: Controller
 {
 	private readonly SignInManager<ApplicationUser> _signInManager = signInManager;

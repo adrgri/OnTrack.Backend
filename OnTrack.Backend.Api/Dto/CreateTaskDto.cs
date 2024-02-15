@@ -4,7 +4,7 @@ using Task = OnTrack.Backend.Api.Models.Task;
 
 namespace OnTrack.Backend.Api.Dto;
 
-public class CreateTaskDto : IDto<Task>
+public sealed record class CreateTaskDto : IDto<Task>
 {
 	public MilestoneId MilestoneId { get; set; }
 	public string Title { get; set; }

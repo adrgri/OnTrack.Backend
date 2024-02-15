@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 
 using OnTrack.Backend.Api.Data;
+using OnTrack.Backend.Api.Dto;
 using OnTrack.Backend.Api.Models;
 
 namespace OnTrack.Backend.Api.Controllers;
@@ -19,11 +20,11 @@ public class MilestonesController(ILogger<StatusesController> logger, Applicatio
 	}
 
 	[HttpPost]
-	[ProducesResponseType(StatusCodes.Status200OK), ProducesResponseType(StatusCodes.Status201Created)]
+	[ProducesResponseType(StatusCodes.Status201Created)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
-	public async Task<ActionResult<Milestone>> PostMilestone(Milestone milestone)
+	public async Task<ActionResult<Milestone>> PostMilestone(CreateMilestoneDto createMilestoneDto)
 	{
-		Status status = createStatusDto.ToDomainModel();
+		Milestone milestone = createMilestoneDto.ToDomainModel();
 
 		_ = _context.Milestones.Add(milestone);
 		_ = await _context.SaveChangesAsync();
