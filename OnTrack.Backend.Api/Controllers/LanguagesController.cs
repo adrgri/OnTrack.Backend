@@ -1,50 +1,39 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-using OnTrack.Backend.Api.Data;
+using OnTrack.Backend.Api.Application.Mappings;
 using OnTrack.Backend.Api.Dto;
 using OnTrack.Backend.Api.Models;
+using OnTrack.Backend.Api.Services;
 
 namespace OnTrack.Backend.Api.Controllers;
 
 [ApiController, Route("api/language")]
-public sealed class LanguagesController(ILogger<StatusesController> logger, ApplicationDbContext context)
+public sealed class LanguagesController(IEntityAccessService<Language, LanguageId> languagesService, ILogger<StatusesController> logger)
 	: ControllerBase
 {
+	private readonly IEntityAccessService<Language, LanguageId> _languagesService = languagesService;
 	private readonly ILogger<StatusesController> _logger = logger;
-	private readonly ApplicationDbContext _context = context;
-
-	private bool LanguageExists(LanguageId id)
-	{
-		return _context.Languages.Any(e => e.Id == id);
-	}
 
 	[HttpPost]
 	[ProducesResponseType(StatusCodes.Status201Created)]
-	[ProducesResponseType(StatusCodes.Status400BadRequest)]
-	public async Task<ActionResult<Language>> PostLanguage(CreateLanguageDto createLanguageDto)
+	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status400BadRequest)]
+	public async Task<ActionResult<Language>> PostLanguage(LanguageDto createLanguageDto, [FromServices] IMapper<Language, LanguageId, LanguageDto> mapper)
 	{
-		Language language = createLanguageDto.ToDomainModel();
+		Language language = mapper.ToNewDomainModel(createLanguageDto);
 
-		_ = _context.Languages.Add(language);
-		_ = await _context.SaveChangesAsync();
+		await _languagesService.Add(language);
+		await _languagesService.SaveChanges();
 
 		return CreatedAtAction(nameof(GetLanguage), new { languageId = language.Id }, language);
 	}
 
-	[HttpGet]
-	[ProducesResponseType(StatusCodes.Status200OK)]
-	public async Task<ActionResult<IEnumerable<Language>>> GetLanguages()
-	{
-		return await _context.Languages.ToListAsync();
-	}
-
 	[HttpGet("{languageId}")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	[ProducesResponseType(StatusCodes.Status404NotFound)]
+	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
 	public async Task<ActionResult<Language>> GetLanguage(LanguageId languageId)
 	{
-		Language? language = await _context.Languages.FindAsync(languageId);
+		Language? language = await _languagesService.Find(languageId);
 
 		return language switch
 		{
@@ -53,18 +42,36 @@ public sealed class LanguagesController(ILogger<StatusesController> logger, Appl
 		};
 	}
 
+	[HttpGet]
+	[ProducesResponseType(StatusCodes.Status200OK)]
+	public async Task<ActionResult<IEnumerable<Language>>> GetLanguages()
+	{
+		IEnumerable<Language> languages = await _languagesService.GetAll();
+
+		return languages.ToList();
+	}
+
 	[HttpPut]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	[ProducesResponseType(StatusCodes.Status404NotFound)]
-	public async Task<IActionResult> PutLanguage(Language language)
+	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
+	public async Task<IActionResult> PutLanguage(LanguageId languageId, LanguageDto languageDto, [FromServices] IMapper<Language, LanguageId, LanguageDto> mapper)
 	{
-		_context.Entry(language).State = EntityState.Modified;
+		Language? language = await _languagesService.Find(languageId);
+
+		if (language is null)
+		{
+			return NotFound();
+		}
+
+		mapper.ToExistingDomainModel(languageDto, language);
+
+		await _languagesService.Update(language);
 
 		try
 		{
-			_ = await _context.SaveChangesAsync();
+			await _languagesService.SaveChanges();
 		}
-		catch (DbUpdateConcurrencyException) when (LanguageExists(language.Id) == false)
+		catch (DbUpdateConcurrencyException)
 		{
 			return NotFound();
 		}
@@ -74,22 +81,21 @@ public sealed class LanguagesController(ILogger<StatusesController> logger, Appl
 
 	[HttpDelete("{languageId}")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	[ProducesResponseType(StatusCodes.Status404NotFound), ProducesResponseType(StatusCodes.Status409Conflict)]
+	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound), ProducesResponseType(StatusCodes.Status409Conflict)]
 	public async Task<IActionResult> DeleteLanguage(LanguageId languageId)
 	{
-		Language? language = await _context.Languages.FindAsync(languageId);
+		Language? language = await _languagesService.Find(languageId);
 
 		if (language is null)
 		{
 			return NotFound();
 		}
 
-		_ = _context.Languages.Remove(language);
+		await _languagesService.Remove(language);
 
-		// TODO Utwórz IDatabaseService i przenieś do niego tę logikę do niego
 		try
 		{
-			_ = await _context.SaveChangesAsync();
+			await _languagesService.SaveChanges();
 
 			return Ok();
 		}

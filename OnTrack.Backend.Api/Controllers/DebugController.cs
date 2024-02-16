@@ -16,14 +16,36 @@ public sealed class DebugController(ILogger<DebugController> logger, IConfigurat
 	private readonly IConfiguration _configuration = configuration;
 	private readonly IWebHostEnvironment _webHostEnvironment = webHostEnvironment;
 
+	private static T? GetValue<T>(IConfiguration configuration, string key, ILogger logger)
+	{
+		T? value = configuration.GetValue<T>(key);
+
+		if (value is null)
+		{
+			logger.LogError("The configuration key {ConfigKey} is not present in the current IConfiguration manager.", key);
+		}
+
+		return value;
+	}
+
+	private PhysicalFileResult SendPhysicalFile(FileInfo file)
+	{
+		const string fileMime = "application/octet-stream";
+
+		return PhysicalFile(file.FullName, fileMime, file.Name);
+	}
+
 	[Authorize]
 	[HttpGet("testAuthentication")]
+	[ProducesResponseType(StatusCodes.Status200OK)]
+	[ProducesResponseType(StatusCodes.Status401Unauthorized)]
 	public IActionResult TestAuthentication()
 	{
 		return Ok("You have authenticated successfully :)");
 	}
 
 	[HttpGet("environmentInfo")]
+	[ProducesResponseType(StatusCodes.Status200OK)]
 	public IActionResult EnvironmentInfo()
 	{
 		return Ok(new
@@ -34,6 +56,7 @@ public sealed class DebugController(ILogger<DebugController> logger, IConfigurat
 	}
 
 	[HttpGet("downloadSqliteLogDatabase")]
+	[ProducesResponseType(StatusCodes.Status200OK)]
 	public IActionResult DownloadSqliteLogDatabase()
 	{
 		using IDisposable? _ = _logger.BeginScope(nameof(DownloadSqliteLogDatabase));
@@ -68,23 +91,6 @@ public sealed class DebugController(ILogger<DebugController> logger, IConfigurat
 			sqliteDbAbsoluteFileInfo.FullName);
 
 		return NotFound();
-	}
-
-	private static T? GetValue<T>(IConfiguration configuration, string key, ILogger logger)
-	{
-		T? value = configuration.GetValue<T>(key);
-
-		if (value is null)
-		{
-			logger.LogError("The configuration key {ConfigKey} is not present in the current IConfiguration manager.", key);
-		}
-
-		return value;
-	}
-
-	private PhysicalFileResult SendPhysicalFile(FileInfo file)
-	{
-		return PhysicalFile(file.FullName, "application/octet-stream", file.Name);
 	}
 }
 #endif

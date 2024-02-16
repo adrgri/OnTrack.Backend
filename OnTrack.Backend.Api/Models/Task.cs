@@ -1,14 +1,13 @@
-﻿using System.ComponentModel;
-using System.Text.Json.Serialization;
+﻿using Microsoft.EntityFrameworkCore;
 
-using Microsoft.EntityFrameworkCore;
+using OnTrack.Backend.Api.Infrastructure.DataAccess;
 
 namespace OnTrack.Backend.Api.Models;
 
-[EntityTypeConfiguration<StronglyTypedIdEntityConfiguration<TaskId, Task>, Task>()]
+[EntityTypeConfiguration<StronglyTypedIdEntityConfiguration<TaskId, Task>, Task>]
 public sealed record class Task : IEntity<TaskId>
 {
-	public TaskId Id { get; init; }
+    public TaskId Id { get; set; }
 	public Milestone Milestone { get; set; }
 	public string Title { get; set; }
 	public string? Description { get; set; }
@@ -20,7 +19,3 @@ public sealed record class Task : IEntity<TaskId>
 	public ICollection<Attachment>? Attachments { get; set; }
 	public ICollection<Task>? Subtasks { get; set; }
 }
-
-[TypeConverter(typeof(StronglyTypedIdTypeConverter<TaskId>))]
-[JsonConverter(typeof(StronglyTypedIdJsonConverter<TaskId>))]
-public sealed record class TaskId : StronglyTypedId;

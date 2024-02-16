@@ -2,9 +2,9 @@
 
 namespace OnTrack.Backend.Api.Models;
 
-public interface IEntity<out TEntityId>
+public interface IEntity<TEntityId>
 	where TEntityId : IStronglyTypedId
 {
 	[Key]
-	TEntityId Id { get; }
+	TEntityId Id { get; set; }
 }

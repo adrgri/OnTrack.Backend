@@ -1,17 +1,13 @@
-﻿using System.ComponentModel;
-using System.Text.Json.Serialization;
+﻿using Microsoft.EntityFrameworkCore;
 
-using Microsoft.EntityFrameworkCore;
+using OnTrack.Backend.Api.Infrastructure.DataAccess;
 
 namespace OnTrack.Backend.Api.Models;
 
-[EntityTypeConfiguration<StronglyTypedIdEntityConfiguration<StatusId, Status>, Status>()]
+[EntityTypeConfiguration<StronglyTypedIdEntityConfiguration<StatusId, Status>, Status>]
 public sealed record class Status : IEntity<StatusId>
 {
-	public StatusId Id { get; init; } = new StatusId();
+	public StatusId Id { get; set; }
 	public string Name { get; set; }
+	public int Order { get; set; }
 }
-
-[TypeConverter(typeof(StronglyTypedIdTypeConverter<StatusId>))]
-[JsonConverter(typeof(StronglyTypedIdJsonConverter<StatusId>))]
-public sealed record class StatusId : StronglyTypedId;

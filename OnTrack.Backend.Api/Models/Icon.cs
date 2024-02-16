@@ -1,31 +1,13 @@
-﻿using System.ComponentModel;
-using System.Text.Json.Serialization;
+﻿using Microsoft.EntityFrameworkCore;
 
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using OnTrack.Backend.Api.Infrastructure.DataAccess;
 
 namespace OnTrack.Backend.Api.Models;
 
-[EntityTypeConfiguration<IconConfiguration, Icon>()]
+[EntityTypeConfiguration<IconConfiguration, Icon>]
 public sealed record class Icon : IEntity<IconId>
 {
-	public IconId Id { get; init; }
+	public IconId Id { get; set; }
 	public string Name { get; set; }
 	public PathString FilePath { get; set; }
-}
-
-[TypeConverter(typeof(StronglyTypedIdTypeConverter<IconId>))]
-[JsonConverter(typeof(StronglyTypedIdJsonConverter<IconId>))]
-public sealed record class IconId : StronglyTypedId;
-
-public sealed class IconConfiguration : StronglyTypedIdEntityConfiguration<IconId, Icon>
-{
-	public override void Configure(EntityTypeBuilder<Icon> builder)
-	{
-		base.Configure(builder);
-
-		_ = builder.Property(icon => icon.FilePath).HasConversion(
-			path => path.HasValue ? path.ToString() : null,
-			value => new PathString(value));
-	}
 }

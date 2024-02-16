@@ -1,50 +1,39 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-using OnTrack.Backend.Api.Data;
+using OnTrack.Backend.Api.Application.Mappings;
 using OnTrack.Backend.Api.Dto;
 using OnTrack.Backend.Api.Models;
+using OnTrack.Backend.Api.Services;
 
 namespace OnTrack.Backend.Api.Controllers;
 
 [ApiController, Route("api/status")]
-public sealed class StatusesController(ILogger<StatusesController> logger, ApplicationDbContext context)
+public sealed class StatusesController(IEntityAccessService<Status, StatusId> statusesService, ILogger<StatusesController> logger)
 	: ControllerBase
 {
+	private readonly IEntityAccessService<Status, StatusId> _statusesService = statusesService;
 	private readonly ILogger<StatusesController> _logger = logger;
-	private readonly ApplicationDbContext _context = context;
-
-	private bool StatusExists(StatusId id)
-	{
-		return _context.Statuses.Any(e => e.Id == id);
-	}
 
 	[HttpPost]
 	[ProducesResponseType(StatusCodes.Status201Created)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
-	public async Task<ActionResult<Status>> PostStatus(CreateStatusDto createStatusDto)
+	public async Task<ActionResult<Status>> PostStatus(StatusDto statusDto, [FromServices] IMapper<Status, StatusId, StatusDto> mapper)
 	{
-		Status status = createStatusDto.ToDomainModel();
+		Status status = mapper.ToNewDomainModel(statusDto);
 
-		_ = _context.Statuses.Add(status);
-		_ = await _context.SaveChangesAsync();
+		await _statusesService.Add(status);
+		await _statusesService.SaveChanges();
 
 		return CreatedAtAction(nameof(GetStatus), new { statusId = status.Id }, status);
 	}
 
-	[HttpGet]
-	[ProducesResponseType(StatusCodes.Status200OK)]
-	public async Task<ActionResult<IEnumerable<Status>>> GetAllStatuses()
-	{
-		return await _context.Statuses.ToListAsync();
-	}
-
 	[HttpGet("{statusId}")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	[ProducesResponseType(StatusCodes.Status404NotFound)]
+	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
 	public async Task<ActionResult<Status>> GetStatus(StatusId statusId)
 	{
-		Status? status = await _context.Statuses.FindAsync(statusId);
+		Status? status = await _statusesService.Find(statusId);
 
 		return status switch
 		{
@@ -53,20 +42,38 @@ public sealed class StatusesController(ILogger<StatusesController> logger, Appli
 		};
 	}
 
-	[HttpPut]
+	[HttpGet]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	[ProducesResponseType(StatusCodes.Status404NotFound)]
-	public async Task<IActionResult> PutStatus(Status status)
+	public async Task<ActionResult<IEnumerable<Status>>> GetStatuses()
 	{
-		_context.Entry(status).State = EntityState.Modified;
+		IEnumerable<Status> statuses = await _statusesService.GetAll();
+
+		return statuses.ToList();
+	}
+
+	[HttpPut("{statusId}")]
+	[ProducesResponseType(StatusCodes.Status200OK)]
+	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound), ProducesResponseType(StatusCodes.Status409Conflict)]
+	public async Task<IActionResult> PutStatus(StatusId statusId, StatusDto statusDto, [FromServices] IMapper<Status, StatusId, StatusDto> mapper)
+	{
+		Status? status = await _statusesService.Find(statusId);
+
+		if (status is null)
+		{
+			return NotFound();
+		}
+
+		mapper.ToExistingDomainModel(statusDto, status);
+
+		await _statusesService.Update(status);
 
 		try
 		{
-			_ = await _context.SaveChangesAsync();
+			await _statusesService.SaveChanges();
 		}
-		catch (DbUpdateConcurrencyException) when (StatusExists(status.Id) == false)
+		catch (DbUpdateConcurrencyException)
 		{
-			return NotFound();
+			return Conflict();
 		}
 
 		return Ok();
@@ -74,22 +81,22 @@ public sealed class StatusesController(ILogger<StatusesController> logger, Appli
 
 	[HttpDelete("{statusId}")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	[ProducesResponseType(StatusCodes.Status404NotFound), ProducesResponseType(StatusCodes.Status409Conflict)]
+	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound), ProducesResponseType(StatusCodes.Status409Conflict)]
 	public async Task<IActionResult> DeleteStatus(StatusId statusId)
 	{
-		Status? status = await _context.Statuses.FindAsync(statusId);
+		Status? status = await _statusesService.Find(statusId);
 
 		if (status is null)
 		{
 			return NotFound();
 		}
 
-		_ = _context.Statuses.Remove(status);
+		await _statusesService.Remove(status);
 
-		// TODO Utwórz IDatabaseService i przenieś do niego tę logikę do niego
+		// TODO Przenieś tę logikę do data access service gdy już zaimplementujesz zwracanie rezultatu operacji
 		try
 		{
-			_ = await _context.SaveChangesAsync();
+			await _statusesService.SaveChanges();
 
 			return Ok();
 		}

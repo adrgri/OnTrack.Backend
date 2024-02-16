@@ -10,6 +10,8 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     <GenerateDocumentationFile>False</GenerateDocumentationFile>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,6 +25,12 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Exclude the output of source generators from the compilation, show it in the IDE -->
+    <Compile Remove="$(CompilerGeneratedFilesOutputPath)/**/*.cs" />
+    <None Include="$(CompilerGeneratedFilesOutputPath)/**/*.cs" />
+  </ItemGroup>
+  
   <ItemGroup>
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.22.0" />
     <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid.EntityFrameworkAdapter" Version="8.0.2" />
@@ -47,8 +55,11 @@
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.6" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.1" />
+    <PackageReference Include="OneOf" Version="3.0.263" />
+    <PackageReference Include="OneOf.SourceGenerator" Version="3.0.263" />
     <PackageReference Include="OpenIddict.AspNetCore" Version="5.2.0" />
     <PackageReference Include="OpenIddict.EntityFrameworkCore" Version="5.2.0" />
+    <PackageReference Include="Riok.Mapperly" Version="3.3.0" />
     <PackageReference Include="Serilog" Version="3.1.1">
       <TreatAsUsed>true</TreatAsUsed>
     </PackageReference>

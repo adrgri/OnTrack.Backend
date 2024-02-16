@@ -1,50 +1,39 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-using OnTrack.Backend.Api.Data;
+using OnTrack.Backend.Api.Application.Mappings;
 using OnTrack.Backend.Api.Dto;
 using OnTrack.Backend.Api.Models;
+using OnTrack.Backend.Api.Services;
 
 namespace OnTrack.Backend.Api.Controllers;
 
 [ApiController, Route("api/resource")]
-public class ResourcesController(ILogger<StatusesController> logger, ApplicationDbContext context)
+public sealed class ResourcesController(IEntityAccessService<Resource, ResourceId> resourcesService, ILogger<StatusesController> logger)
 	: ControllerBase
 {
+	private readonly IEntityAccessService<Resource, ResourceId> _resourcesService = resourcesService;
 	private readonly ILogger<StatusesController> _logger = logger;
-	private readonly ApplicationDbContext _context = context;
-
-	private bool ResourceExists(ResourceId id)
-	{
-		return _context.Resources.Any(e => e.Id == id);
-	}
 
 	[HttpPost]
 	[ProducesResponseType(StatusCodes.Status201Created)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
-	public async Task<ActionResult<Resource>> PostResource(CreateResourceDto createResourceDto)
+	public async Task<ActionResult<Resource>> PostResource(ResourceDto createResourceDto, [FromServices] IMapper<Resource, ResourceId, ResourceDto> mapper)
 	{
-		Resource resource = createResourceDto.ToDomainModel();
+		Resource resource = mapper.ToNewDomainModel(createResourceDto);
 
-		_ = _context.Resources.Add(resource);
-		_ = await _context.SaveChangesAsync();
+		await _resourcesService.Add(resource);
+		await _resourcesService.SaveChanges();
 
 		return CreatedAtAction(nameof(GetResource), new { resourceId = resource.Id }, resource);
 	}
 
-	[HttpGet]
-	[ProducesResponseType(StatusCodes.Status200OK)]
-	public async Task<ActionResult<IEnumerable<Resource>>> GetResources()
-	{
-		return await _context.Resources.ToListAsync();
-	}
-
 	[HttpGet("{resourceId}")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	[ProducesResponseType(StatusCodes.Status404NotFound)]
+	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
 	public async Task<ActionResult<Resource>> GetResource(ResourceId resourceId)
 	{
-		Resource? resource = await _context.Resources.FindAsync(resourceId);
+		Resource? resource = await _resourcesService.Find(resourceId);
 
 		return resource switch
 		{
@@ -53,18 +42,36 @@ public class ResourcesController(ILogger<StatusesController> logger, Application
 		};
 	}
 
+	[HttpGet]
+	[ProducesResponseType(StatusCodes.Status200OK)]
+	public async Task<ActionResult<IEnumerable<Resource>>> GetResources()
+	{
+		IEnumerable<Resource> resources = await _resourcesService.GetAll();
+
+		return resources.ToList();
+	}
+
 	[HttpPut]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	[ProducesResponseType(StatusCodes.Status404NotFound)]
-	public async Task<IActionResult> PutResource(Resource resource)
+	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
+	public async Task<IActionResult> PutResource(ResourceId resourceId, ResourceDto resourceDto, [FromServices] IMapper<Resource, ResourceId, ResourceDto> mapper)
 	{
-		_context.Entry(resource).State = EntityState.Modified;
+		Resource? resource = await _resourcesService.Find(resourceId);
+
+		if (resource is null)
+		{
+			return NotFound();
+		}
+
+		mapper.ToExistingDomainModel(resourceDto, resource);
+
+		await _resourcesService.Update(resource);
 
 		try
 		{
-			_ = await _context.SaveChangesAsync();
+			await _resourcesService.SaveChanges();
 		}
-		catch (DbUpdateConcurrencyException) when (ResourceExists(resource.Id) == false)
+		catch (DbUpdateConcurrencyException)
 		{
 			return NotFound();
 		}
@@ -74,22 +81,21 @@ public class ResourcesController(ILogger<StatusesController> logger, Application
 
 	[HttpDelete("{resourceId}")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	[ProducesResponseType(StatusCodes.Status404NotFound), ProducesResponseType(StatusCodes.Status409Conflict)]
+	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound), ProducesResponseType(StatusCodes.Status409Conflict)]
 	public async Task<IActionResult> DeleteResource(ResourceId resourceId)
 	{
-		Resource? resource = await _context.Resources.FindAsync(resourceId);
+		Resource? resource = await _resourcesService.Find(resourceId);
 
 		if (resource is null)
 		{
 			return NotFound();
 		}
 
-		_ = _context.Resources.Remove(resource);
+		await _resourcesService.Remove(resource);
 
-		// TODO Utwórz IDatabaseService i przenieś do niego tę logikę do niego
 		try
 		{
-			_ = await _context.SaveChangesAsync();
+			await _resourcesService.SaveChanges();
 
 			return Ok();
 		}

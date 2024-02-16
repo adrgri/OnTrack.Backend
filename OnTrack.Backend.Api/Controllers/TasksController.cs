@@ -1,52 +1,41 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-using OnTrack.Backend.Api.Data;
+using OnTrack.Backend.Api.Application.Mappings;
 using OnTrack.Backend.Api.Dto;
 using OnTrack.Backend.Api.Models;
+using OnTrack.Backend.Api.Services;
 
 using Task = OnTrack.Backend.Api.Models.Task;
 
 namespace OnTrack.Backend.Api.Controllers;
 
 [ApiController, Route("api/task")]
-public class TasksController(ILogger<StatusesController> logger, ApplicationDbContext context)
+public sealed class TasksController(IEntityAccessService<Task, TaskId> tasksService, ILogger<StatusesController> logger)
 	: ControllerBase
 {
+	private readonly IEntityAccessService<Task, TaskId> _tasksService = tasksService;
 	private readonly ILogger<StatusesController> _logger = logger;
-	private readonly ApplicationDbContext _context = context;
-
-	private bool TaskExists(TaskId id)
-	{
-		return _context.Tasks.Any(e => e.Id == id);
-	}
 
 	[HttpPost]
 	[ProducesResponseType(StatusCodes.Status201Created)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
-	public async Task<ActionResult<Task>> PostTask(CreateTaskDto createTaskDto)
+	public async Task<ActionResult<Task>> PostTask(TaskDto createTaskDto, [FromServices] IMapper<Task, TaskId, TaskDto> mapper)
 	{
-		Task task = createTaskDto.ToDomainModel();
+		Task task = mapper.ToNewDomainModel(createTaskDto);
 
-		_ = _context.Tasks.Add(task);
-		_ = await _context.SaveChangesAsync();
+		await _tasksService.Add(task);
+		await _tasksService.SaveChanges();
 
 		return CreatedAtAction(nameof(GetTask), new { taskId = task.Id }, task);
 	}
 
-	[HttpGet]
-	[ProducesResponseType(StatusCodes.Status200OK)]
-	public async Task<ActionResult<IEnumerable<Task>>> GetTasks()
-	{
-		return await _context.Tasks.ToListAsync();
-	}
-
 	[HttpGet("{taskId}")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	[ProducesResponseType(StatusCodes.Status404NotFound)]
+	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
 	public async Task<ActionResult<Task>> GetTask(TaskId taskId)
 	{
-		Task? task = await _context.Tasks.FindAsync(taskId);
+		Task? task = await _tasksService.Find(taskId);
 
 		return task switch
 		{
@@ -55,18 +44,36 @@ public class TasksController(ILogger<StatusesController> logger, ApplicationDbCo
 		};
 	}
 
+	[HttpGet]
+	[ProducesResponseType(StatusCodes.Status200OK)]
+	public async Task<ActionResult<IEnumerable<Task>>> GetTasks()
+	{
+		IEnumerable<Task> tasks = await _tasksService.GetAll();
+
+		return tasks.ToList();
+	}
+
 	[HttpPut]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	[ProducesResponseType(StatusCodes.Status404NotFound)]
-	public async Task<IActionResult> PutTask(Task task)
+	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
+	public async Task<IActionResult> PutTask(TaskId taskId, TaskDto taskDto, [FromServices] IMapper<Task, TaskId, TaskDto> mapper)
 	{
-		_context.Entry(task).State = EntityState.Modified;
+		Task? task = await _tasksService.Find(taskId);
+
+		if (task is null)
+		{
+			return NotFound();
+		}
+
+		mapper.ToExistingDomainModel(taskDto, task);
+
+		await _tasksService.Update(task);
 
 		try
 		{
-			_ = await _context.SaveChangesAsync();
+			await _tasksService.SaveChanges();
 		}
-		catch (DbUpdateConcurrencyException) when (TaskExists(task.Id) == false)
+		catch (DbUpdateConcurrencyException)
 		{
 			return NotFound();
 		}
@@ -76,22 +83,21 @@ public class TasksController(ILogger<StatusesController> logger, ApplicationDbCo
 
 	[HttpDelete("{taskId}")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	[ProducesResponseType(StatusCodes.Status404NotFound), ProducesResponseType(StatusCodes.Status409Conflict)]
+	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound), ProducesResponseType(StatusCodes.Status409Conflict)]
 	public async Task<IActionResult> DeleteTask(TaskId taskId)
 	{
-		Task? task = await _context.Tasks.FindAsync(taskId);
+		Task? task = await _tasksService.Find(taskId);
 
 		if (task is null)
 		{
 			return NotFound();
 		}
 
-		_ = _context.Tasks.Remove(task);
+		await _tasksService.Remove(task);
 
-		// TODO Utwórz IDatabaseService i przenieś do niego tę logikę do niego
 		try
 		{
-			_ = await _context.SaveChangesAsync();
+			await _tasksService.SaveChanges();
 
 			return Ok();
 		}

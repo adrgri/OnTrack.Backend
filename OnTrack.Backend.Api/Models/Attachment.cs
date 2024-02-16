@@ -1,31 +1,13 @@
-﻿using System.ComponentModel;
-using System.Text.Json.Serialization;
+﻿using Microsoft.EntityFrameworkCore;
 
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using OnTrack.Backend.Api.Infrastructure.DataAccess;
 
 namespace OnTrack.Backend.Api.Models;
 
-[EntityTypeConfiguration<AttachmentIdConfiguration, Attachment>()]
+[EntityTypeConfiguration<AttachmentConfiguration, Attachment>]
 public sealed record class Attachment : IEntity<AttachmentId>
 {
-	public AttachmentId Id { get; init; }
+	public AttachmentId Id { get; set; }
 	public string DisplayName { get; set; }
 	public PathString Path { get; set; }
-}
-
-[TypeConverter(typeof(StronglyTypedIdTypeConverter<AttachmentId>))]
-[JsonConverter(typeof(StronglyTypedIdJsonConverter<AttachmentId>))]
-public sealed record class AttachmentId : StronglyTypedId;
-
-public sealed class AttachmentIdConfiguration : StronglyTypedIdEntityConfiguration<AttachmentId, Attachment>
-{
-	public override void Configure(EntityTypeBuilder<Attachment> builder)
-	{
-		base.Configure(builder);
-
-		_ = builder.Property(attachment => attachment.Path).HasConversion(
-			path => path.HasValue ? path.ToString() : null,
-			value => new PathString(value));
-	}
 }
