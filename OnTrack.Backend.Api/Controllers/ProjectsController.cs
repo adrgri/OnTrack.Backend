@@ -2,7 +2,6 @@
 using Microsoft.EntityFrameworkCore;
 
 using OneOf;
-using OneOf.Types;
 
 using OnTrack.Backend.Api.Application.Mappings;
 using OnTrack.Backend.Api.Dto;
@@ -37,13 +36,14 @@ public sealed class ProjectsController(
 		validationProblems.Errors.Add(errorDescription.Key.ToString(), errorDescription.Value);
 	}
 
-	private static async IAsyncEnumerable<OneOf<TEntity, KeyValuePair<TEntityId, string[]>>> GetEntityOrGenerateErrorsIfDoesNotExist<TEntity, TEntityId>(
+	private static async IAsyncEnumerable<OneOf<TEntity, KeyValuePair<TEntityId, string[]>>> GetEntitiesOrGenerateErrorsIfDoesNotExist<TEntity, TEntityId>(
 		IEnumerable<TEntityId> entityIds,
-		IEntityAccessService<TEntity, TEntityId> entityAccessService,
-		string errorMessageTemplate)
+		IEntityAccessService<TEntity, TEntityId> entityAccessService)
 		where TEntity : IEntity<TEntityId>
 		where TEntityId : IStronglyTypedId
 	{
+		const string errorMessageTemplate = "{0} with specified Id does not exist.";
+
 		foreach (TEntityId entityId in entityIds)
 		{
 			TEntity? entity = await entityAccessService.Find(entityId);
@@ -51,21 +51,21 @@ public sealed class ProjectsController(
 			yield return entity switch
 			{
 				not null => entity,
-				null => new KeyValuePair<TEntityId, string[]>(entityId, [string.Format(errorMessageTemplate, entityId)])
+				null => new KeyValuePair<TEntityId, string[]>(entityId, [string.Format(errorMessageTemplate, typeof(TEntity).Name)])
 			};
 		}
 	}
 
-	private IAsyncEnumerable<OneOf<AppUser, KeyValuePair<IdentitySystemObjectId, string[]>>> GetAppUserOrGenerateErrorsIfDoesNotExist(IEnumerable<IdentitySystemObjectId> memberIdsToFind)
+	private IAsyncEnumerable<OneOf<AppUser, KeyValuePair<IdentitySystemObjectId, string[]>>> GetAppUsersOrGenerateErrorsIfDoesNotExist(IEnumerable<IdentitySystemObjectId> memberIdsToFind)
 	{
-		return GetEntityOrGenerateErrorsIfDoesNotExist(memberIdsToFind, _appUsersService, "User with id {0} does not exist.");
+		return GetEntitiesOrGenerateErrorsIfDoesNotExist(memberIdsToFind, _appUsersService);
 	}
 
 	private async Task<OneOf<Project, ActionResult>> ValidateAppUsersExistance(Project project, IEnumerable<IdentitySystemObjectId> memberIdsToFind)
 	{
 		ValidationProblemDetails? validationProblems = null;
 
-		await foreach (OneOf<AppUser, KeyValuePair<IdentitySystemObjectId, string[]>> oneOf in GetAppUserOrGenerateErrorsIfDoesNotExist(memberIdsToFind))
+		await foreach (OneOf<AppUser, KeyValuePair<IdentitySystemObjectId, string[]>> oneOf in GetAppUsersOrGenerateErrorsIfDoesNotExist(memberIdsToFind))
 		{
 			oneOf.Switch(
 				project.Members.Add,
@@ -79,16 +79,16 @@ public sealed class ProjectsController(
 		};
 	}
 
-	private IAsyncEnumerable<OneOf<Milestone, KeyValuePair<MilestoneId, string[]>>> GetMilestoneOrGenerateErrorsIfDoesNotExist(IEnumerable<MilestoneId> milestoneIdsToFind)
+	private IAsyncEnumerable<OneOf<Milestone, KeyValuePair<MilestoneId, string[]>>> GetMilestonesOrGenerateErrorsIfDoesNotExist(IEnumerable<MilestoneId> milestoneIdsToFind)
 	{
-		return GetEntityOrGenerateErrorsIfDoesNotExist(milestoneIdsToFind, _milestonesService, "Milestone with id {0} does not exist.");
+		return GetEntitiesOrGenerateErrorsIfDoesNotExist(milestoneIdsToFind, _milestonesService);
 	}
 
 	private async Task<OneOf<Project, ActionResult>> ValidateMilestonesExistance(Project project, IEnumerable<MilestoneId> milestoneIdsToFind)
 	{
 		ValidationProblemDetails? validationProblems = null;
 
-		await foreach (OneOf<Milestone, KeyValuePair<MilestoneId, string[]>> oneOf in GetMilestoneOrGenerateErrorsIfDoesNotExist(milestoneIdsToFind))
+		await foreach (OneOf<Milestone, KeyValuePair<MilestoneId, string[]>> oneOf in GetMilestonesOrGenerateErrorsIfDoesNotExist(milestoneIdsToFind))
 		{
 			oneOf.Switch(milestone =>
 			{
@@ -140,7 +140,7 @@ public sealed class ProjectsController(
 
 		return await nestedEntitesExistanceValidationResult.Match(
 			AddProject,
-			actionResult => System.Threading.Tasks.Task.FromResult<ActionResult<Project>>(actionResult));
+			actionResult => ReturnFromResult<ActionResult<Project>>(actionResult));
 	}
 
 	[HttpGet("{projectId}")]
