@@ -18,6 +18,7 @@ public sealed class ProjectsController(
 	ILogger<StatusesController> logger)
 	: ControllerBase
 {
+	// TODO: Rename all of those services to _[entity]AccessService
 	private readonly IEntityAccessService<Project, ProjectId> _projectsService = projectsService;
 	private readonly IEntityAccessService<AppUser, IdentitySystemObjectId> _appUsersService = appUserService;
 	private readonly IEntityAccessService<Milestone, MilestoneId> _milestonesService = milestonesService;
