@@ -29,4 +29,6 @@ public sealed class AppUser : IdentityUser<IdentitySystemObjectId>, IEntity<Iden
 	public Language? Language { get; set; }
 
 	public PathString? ProfilePicturePath { get; set; }
+
+	public ICollection<Project>? Projects { get; set; }
 }

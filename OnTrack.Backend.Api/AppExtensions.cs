@@ -267,8 +267,11 @@ internal static class AppExtensions
 			builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddSwaggerGen(options => MapAllStronglyTypedIds(options));
 
-			builder.Services.AddControllers()
-				.AddJsonOptions(options => AddStronglyTypedIdJsonConverters(options, logger));
+			builder.Services.AddControllers().AddJsonOptions(options =>
+			{
+				options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+				AddStronglyTypedIdJsonConverters(options, logger);
+			});
 
 			builder.Services.AddApplicationInsightsTelemetry();
 		}, "Services", logger);

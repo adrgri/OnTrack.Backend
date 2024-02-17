@@ -6,6 +6,14 @@ namespace OnTrack.Backend.Api.Application.Mappings
     {
         public override partial void ToExistingDomainModel(global::OnTrack.Backend.Api.Dto.AppUserDto dto, global::OnTrack.Backend.Api.Models.AppUser entity)
         {
+            if (dto.ProjectIds != null)
+            {
+                entity.Projects = MapToICollection(dto.ProjectIds);
+            }
+            else
+            {
+                entity.Projects = null;
+            }
             entity.FirstName = dto.FirstName;
             entity.LastName = dto.LastName;
             entity.Bio = dto.Bio;
@@ -24,6 +32,14 @@ namespace OnTrack.Backend.Api.Application.Mappings
 
         public override partial void ToExistingDto(global::OnTrack.Backend.Api.Models.AppUser entity, global::OnTrack.Backend.Api.Dto.AppUserDto dto)
         {
+            if (entity.Projects != null)
+            {
+                dto.ProjectIds = MapToICollection1(entity.Projects);
+            }
+            else
+            {
+                dto.ProjectIds = null;
+            }
             dto.UserName = entity.UserName;
             dto.Email = entity.Email;
             dto.FirstName = entity.FirstName;
@@ -43,6 +59,14 @@ namespace OnTrack.Backend.Api.Application.Mappings
         public override partial global::OnTrack.Backend.Api.Models.AppUser ToNewDomainModel(global::OnTrack.Backend.Api.Dto.AppUserDto dto)
         {
             var target = new global::OnTrack.Backend.Api.Models.AppUser();
+            if (dto.ProjectIds != null)
+            {
+                target.Projects = MapToICollection(dto.ProjectIds);
+            }
+            else
+            {
+                target.Projects = null;
+            }
             target.FirstName = dto.FirstName;
             target.LastName = dto.LastName;
             target.Bio = dto.Bio;
@@ -63,6 +87,14 @@ namespace OnTrack.Backend.Api.Application.Mappings
         public override partial global::OnTrack.Backend.Api.Dto.AppUserDto ToNewDto(global::OnTrack.Backend.Api.Models.AppUser entity)
         {
             var target = new global::OnTrack.Backend.Api.Dto.AppUserDto();
+            if (entity.Projects != null)
+            {
+                target.ProjectIds = MapToICollection1(entity.Projects);
+            }
+            else
+            {
+                target.ProjectIds = null;
+            }
             target.UserName = entity.UserName;
             target.Email = entity.Email;
             target.FirstName = entity.FirstName;
@@ -77,6 +109,26 @@ namespace OnTrack.Backend.Api.Application.Mappings
             target.LockoutEnd = entity.LockoutEnd;
             target.LockoutEnabled = entity.LockoutEnabled;
             target.AccessFailedCount = entity.AccessFailedCount;
+            return target;
+        }
+
+        private global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.Project> MapToICollection(global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.ProjectId> source)
+        {
+            var target = new global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.Project>(source.Count);
+            foreach (var item in source)
+            {
+                target.Add(ProjectMapper.FromId(item));
+            }
+            return target;
+        }
+
+        private global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.ProjectId> MapToICollection1(global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.Project> source)
+        {
+            var target = new global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.ProjectId>(source.Count);
+            foreach (var item in source)
+            {
+                target.Add(ProjectMapper.ToId(item));
+            }
             return target;
         }
     }

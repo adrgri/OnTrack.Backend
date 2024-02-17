@@ -34,6 +34,8 @@ public sealed record class AppUserDto : IDto
 
 	public PathString? ProfilePicturePath { get; set; }
 
+	public ICollection<ProjectId>? ProjectIds { get; set; }
+
 	[PersonalData]
 	public bool EmailConfirmed { get; set; }
 
