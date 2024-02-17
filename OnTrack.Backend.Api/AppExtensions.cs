@@ -389,8 +389,12 @@ internal static class AppExtensions
 			app.UseAuthentication();
 			app.UseAuthorization();
 
-			app.MapGroup("/api/identity/")
-				.MapIdentityApi<AppUser>();
+			app.MapGroup("/api/identity/").MapIdentityApi<AppUser>().WithOpenApi(options =>
+			{
+				options.Tags.Clear();
+				options.Tags.Add(new OpenApiTag() { Name = "Identity" });
+				return options;
+			});
 
 			app.MapControllers();
 		}, "Pipeline", logger);
