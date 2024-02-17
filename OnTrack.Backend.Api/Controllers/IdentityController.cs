@@ -18,6 +18,7 @@ public sealed class IdentityController(SignInManager<AppUser> signInManager)
 	[ProducesResponseType(StatusCodes.Status401Unauthorized)]
 	public async Task<IActionResult> Logout()
 	{
+		// TODO: Add token and cookie invalidation here
 		await _signInManager.SignOutAsync();
 
 		return Ok();
