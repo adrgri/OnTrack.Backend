@@ -10,7 +10,7 @@ using OnTrack.Backend.Api.Services;
 
 namespace OnTrack.Backend.Api.Controllers;
 
-[ApiController, Route("api/project")]
+[ApiController, Route("/api/project")]
 public sealed class ProjectsController(
 	IEntityAccessService<Project, ProjectId> projectsService,
 	IEntityAccessService<AppUser, IdentitySystemObjectId> appUserService,

@@ -7,7 +7,7 @@
 
 //namespace OnTrack.Backend.Api.Controllers;
 
-//[ApiController, Route("api/icon")]
+//[ApiController, Route("/api/icon")]
 //public class IconsController(ILogger<StatusesController> logger, ApplicationDbContext context)
 //	: ControllerBase
 //{

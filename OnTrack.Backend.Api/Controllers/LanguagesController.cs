@@ -8,7 +8,7 @@ using OnTrack.Backend.Api.Services;
 
 namespace OnTrack.Backend.Api.Controllers;
 
-[ApiController, Route("api/language")]
+[ApiController, Route("/api/language")]
 public sealed class LanguagesController(IEntityAccessService<Language, LanguageId> languagesService, ILogger<StatusesController> logger)
 	: ControllerBase
 {

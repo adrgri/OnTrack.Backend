@@ -8,7 +8,7 @@
 
 //namespace OnTrack.Backend.Api.Controllers;
 
-//[ApiController, Route("api/milestone")]
+//[ApiController, Route("/api/milestone")]
 //public sealed class MilestonesController(IEntityAccessService<Milestone, MilestoneId> milestonesService, ILogger<StatusesController> logger)
 //	: ControllerBase
 //{

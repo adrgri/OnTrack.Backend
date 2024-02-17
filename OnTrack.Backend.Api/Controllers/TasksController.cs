@@ -10,7 +10,7 @@
 
 //namespace OnTrack.Backend.Api.Controllers;
 
-//[ApiController, Route("api/task")]
+//[ApiController, Route("/api/task")]
 //public sealed class TasksController(IEntityAccessService<Task, TaskId> tasksService, ILogger<StatusesController> logger)
 //	: ControllerBase
 //{

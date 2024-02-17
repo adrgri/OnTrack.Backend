@@ -6,7 +6,7 @@
 
 //namespace OnTrack.Backend.Api.Controllers;
 
-//[ApiController, Route("api/attachment")]
+//[ApiController, Route("/api/attachment")]
 //public class AttachmentsController(ILogger<StatusesController> logger, ApplicationDbContext context)
 //	: ControllerBase
 //{

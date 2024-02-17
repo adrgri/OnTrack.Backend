@@ -8,7 +8,7 @@ using OnTrack.Backend.Api.Services;
 
 namespace OnTrack.Backend.Api.Controllers;
 
-[ApiController, Route("api/status")]
+[ApiController, Route("/api/status")]
 public sealed class StatusesController(IEntityAccessService<Status, StatusId> statusesService, ILogger<StatusesController> logger)
 	: ControllerBase
 {

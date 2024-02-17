@@ -8,7 +8,7 @@ using OnTrack.Backend.Api.Services;
 
 namespace OnTrack.Backend.Api.Controllers;
 
-[ApiController, Route("api/resource")]
+[ApiController, Route("/api/resource")]
 public sealed class ResourcesController(IEntityAccessService<Resource, ResourceId> resourcesService, ILogger<StatusesController> logger)
 	: ControllerBase
 {
