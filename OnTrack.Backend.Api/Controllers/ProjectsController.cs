@@ -1,8 +1,8 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 using OneOf;
+using OneOf.Types;
 
 using OnTrack.Backend.Api.Application.Mappings;
 using OnTrack.Backend.Api.Dto;
@@ -12,32 +12,113 @@ using OnTrack.Backend.Api.Services;
 namespace OnTrack.Backend.Api.Controllers;
 
 [ApiController, Route("api/project")]
-public sealed class ProjectsController(IEntityAccessService<Project, ProjectId> projectsService, ILogger<StatusesController> logger)
+public sealed class ProjectsController(
+	IEntityAccessService<Project, ProjectId> projectsService,
+	IEntityAccessService<AppUser, IdentitySystemObjectId> appUserService,
+	IEntityAccessService<Milestone, MilestoneId> milestonesService,
+	ILogger<StatusesController> logger)
 	: ControllerBase
 {
 	private readonly IEntityAccessService<Project, ProjectId> _projectsService = projectsService;
+	private readonly IEntityAccessService<AppUser, IdentitySystemObjectId> _appUsersService = appUserService;
+	private readonly IEntityAccessService<Milestone, MilestoneId> _milestonesService = milestonesService;
 	private readonly ILogger<StatusesController> _logger = logger;
 
-	private async Task<OneOf<Project, ActionResult>> Validate(Project project)
+	private ValidationProblemDetails CreateValidationProblemDetails()
 	{
-		//project.Members ??= [];
+		return ProblemDetailsFactory.CreateValidationProblemDetails(HttpContext, ModelState);
+	}
 
-		//foreach (IdentitySystemObjectId userId in projectDto.MemberIds)
-		//{
-		//	AppUser? user = await _userManager.FindByIdAsync(userId.ToString());
+	// TODO: This is based on a StronglyTypedId class instead of the interface because the interface can not override the ToString method.
+	private void AddValidationProblem<TEntityId>(ref ValidationProblemDetails? validationProblems, KeyValuePair<TEntityId, string[]> errorDescription)
+		where TEntityId : StronglyTypedId
+	{
+		validationProblems ??= CreateValidationProblemDetails();
+		validationProblems.Errors.Add(errorDescription.Key.ToString(), errorDescription.Value);
+	}
 
-		//	if (user is null)
-		//	{
-		//		return ValidationProblem(detail: $"User with id {userId} does not exist.", statusCode: StatusCodes.Status400BadRequest, title: "Validation failure.");
-		//	}
+	private static async IAsyncEnumerable<OneOf<TEntity, KeyValuePair<TEntityId, string[]>>> GetEntityOrGenerateErrorsIfDoesNotExist<TEntity, TEntityId>(
+		IEnumerable<TEntityId> entityIds,
+		IEntityAccessService<TEntity, TEntityId> entityAccessService,
+		string errorMessageTemplate)
+		where TEntity : IEntity<TEntityId>
+		where TEntityId : IStronglyTypedId
+	{
+		foreach (TEntityId entityId in entityIds)
+		{
+			TEntity? entity = await entityAccessService.Find(entityId);
 
-		//	if (project.Members.Any(user => user.Id == userId) == false)
-		//	{
-		//		project.Members.Add(user);
-		//	}
-		//}
+			yield return entity switch
+			{
+				not null => entity,
+				null => new KeyValuePair<TEntityId, string[]>(entityId, [string.Format(errorMessageTemplate, entityId)])
+			};
+		}
+	}
 
-		throw new NotImplementedException();
+	private IAsyncEnumerable<OneOf<AppUser, KeyValuePair<IdentitySystemObjectId, string[]>>> GetAppUserOrGenerateErrorsIfDoesNotExist(IEnumerable<IdentitySystemObjectId> memberIdsToFind)
+	{
+		return GetEntityOrGenerateErrorsIfDoesNotExist(memberIdsToFind, _appUsersService, "User with id {0} does not exist.");
+	}
+
+	private async Task<OneOf<Project, ActionResult>> ValidateAppUsersExistance(Project project, IEnumerable<IdentitySystemObjectId> memberIdsToFind)
+	{
+		ValidationProblemDetails? validationProblems = null;
+
+		await foreach (OneOf<AppUser, KeyValuePair<IdentitySystemObjectId, string[]>> oneOf in GetAppUserOrGenerateErrorsIfDoesNotExist(memberIdsToFind))
+		{
+			oneOf.Switch(
+				project.Members.Add,
+				errorDescription => AddValidationProblem(ref validationProblems, errorDescription));
+		}
+
+		return validationProblems switch
+		{
+			null => project,
+			not null => ValidationProblem(validationProblems)
+		};
+	}
+
+	private IAsyncEnumerable<OneOf<Milestone, KeyValuePair<MilestoneId, string[]>>> GetMilestoneOrGenerateErrorsIfDoesNotExist(IEnumerable<MilestoneId> milestoneIdsToFind)
+	{
+		return GetEntityOrGenerateErrorsIfDoesNotExist(milestoneIdsToFind, _milestonesService, "Milestone with id {0} does not exist.");
+	}
+
+	private async Task<OneOf<Project, ActionResult>> ValidateMilestonesExistance(Project project, IEnumerable<MilestoneId> milestoneIdsToFind)
+	{
+		ValidationProblemDetails? validationProblems = null;
+
+		await foreach (OneOf<Milestone, KeyValuePair<MilestoneId, string[]>> oneOf in GetMilestoneOrGenerateErrorsIfDoesNotExist(milestoneIdsToFind))
+		{
+			oneOf.Switch(milestone =>
+			{
+				project.Milestones ??= [];
+				project.Milestones.Add(milestone);
+			},
+			errorDescription => AddValidationProblem(ref validationProblems, errorDescription));
+		}
+
+		return validationProblems switch
+		{
+			null => project,
+			not null => ValidationProblem(validationProblems)
+		};
+	}
+
+	private async Task<OneOf<Project, ActionResult>> ValidateNestedEntitesExistance(Project project, ProjectDto projectDto)
+	{
+		project.Members = [];
+		project.Milestones = [];
+		projectDto.MilestoneIds ??= [];
+
+		IEnumerable<IdentitySystemObjectId> uniqueAppUserIds = projectDto.MemberIds.Distinct();
+		IEnumerable<MilestoneId> uniqueMilestoneIds = projectDto.MilestoneIds.Distinct();
+
+		OneOf<Project, ActionResult> appUsersExistanceValidationResult = await ValidateAppUsersExistance(project, uniqueAppUserIds);
+
+		return await appUsersExistanceValidationResult.Match(
+			project => ValidateMilestonesExistance(project, uniqueMilestoneIds),
+			actionResult => System.Threading.Tasks.Task.FromResult<OneOf<Project, ActionResult>>(actionResult));
 	}
 
 	private async Task<ActionResult<Project>> AddProject(Project project)
@@ -48,11 +129,6 @@ public sealed class ProjectsController(IEntityAccessService<Project, ProjectId> 
 		return CreatedAtAction(nameof(GetProject), new { projectId = project.Id }, project);
 	}
 
-	private Task<ActionResult<Project>> ReturnValidationFailure(ActionResult actionResult)
-	{
-		return System.Threading.Tasks.Task.FromResult<ActionResult<Project>>(actionResult);
-	}
-
 	[HttpPost]
 	[ProducesResponseType(StatusCodes.Status201Created)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -60,9 +136,11 @@ public sealed class ProjectsController(IEntityAccessService<Project, ProjectId> 
 	{
 		Project project = mapper.ToNewDomainModel(projectDto);
 
-		OneOf<Project, ActionResult> validationResult = await Validate(project);
+		OneOf<Project, ActionResult> nestedEntitesExistanceValidationResult = await ValidateNestedEntitesExistance(project, projectDto);
 
-		return await validationResult.Match(AddProject, ReturnValidationFailure);
+		return await nestedEntitesExistanceValidationResult.Match(
+			AddProject,
+			actionResult => System.Threading.Tasks.Task.FromResult<ActionResult<Project>>(actionResult));
 	}
 
 	[HttpGet("{projectId}")]
@@ -88,20 +166,19 @@ public sealed class ProjectsController(IEntityAccessService<Project, ProjectId> 
 		return projects.ToList();
 	}
 
-	[HttpPut]
-	[ProducesResponseType(StatusCodes.Status200OK)]
-	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
-	public async Task<IActionResult> PutProject(ProjectId projectId, ProjectDto projectDto, [FromServices] IMapper<Project, ProjectId, ProjectDto> mapper)
+	private async Task<OneOf<Project, ActionResult>> ValidateProjectExistance(ProjectId projectId)
 	{
 		Project? project = await _projectsService.Find(projectId);
 
-		if (project is null)
+		return project switch
 		{
-			return NotFound();
-		}
+			not null => project,
+			null => NotFound()
+		};
+	}
 
-		mapper.ToExistingDomainModel(projectDto, project);
-
+	private async Task<ActionResult> UpdateProject(Project project)
+	{
 		await _projectsService.Update(project);
 
 		try
@@ -114,6 +191,34 @@ public sealed class ProjectsController(IEntityAccessService<Project, ProjectId> 
 		}
 
 		return Ok();
+	}
+
+	private static Task<T> ReturnFromResult<T>(T result)
+	{
+		return System.Threading.Tasks.Task.FromResult(result);
+	}
+
+	[HttpPut]
+	[ProducesResponseType(StatusCodes.Status200OK)]
+	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
+	public async Task<ActionResult> PutProject(ProjectId projectId, ProjectDto projectDto, [FromServices] IMapper<Project, ProjectId, ProjectDto> mapper)
+	{
+		async Task<ActionResult> PutProject(Project project)
+		{
+			mapper.ToExistingDomainModel(projectDto, project);
+
+			OneOf<Project, ActionResult> nestedEntitesExistanceValidationResult = await ValidateNestedEntitesExistance(project, projectDto);
+
+			return await nestedEntitesExistanceValidationResult.Match(
+				UpdateProject,
+				ReturnFromResult);
+		}
+
+		OneOf<Project, ActionResult> projectExistanceValidationResult = await ValidateProjectExistance(projectId);
+
+		return await projectExistanceValidationResult.Match(
+			PutProject,
+			ReturnFromResult);
 	}
 
 	[HttpDelete("{projectId}")]
