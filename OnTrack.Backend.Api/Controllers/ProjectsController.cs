@@ -2,130 +2,46 @@
 using Microsoft.EntityFrameworkCore;
 
 using OneOf;
+using OneOf.Types;
 
 using OnTrack.Backend.Api.Application.Mappings;
 using OnTrack.Backend.Api.Dto;
 using OnTrack.Backend.Api.Models;
 using OnTrack.Backend.Api.Services;
+using OnTrack.Backend.Api.Validation;
 
 namespace OnTrack.Backend.Api.Controllers;
 
 [ApiController, Route("/api/project")]
 public sealed class ProjectsController(
+	ILogger<ProjectsController> logger,
 	IEntityAccessService<Project, ProjectId> projectsService,
-	IEntityAccessService<AppUser, IdentitySystemObjectId> appUserService,
-	IEntityAccessService<Milestone, MilestoneId> milestonesService,
-	ILogger<StatusesController> logger)
-	: ControllerBase
+	IAsyncCollectionValidator<ProjectId, OneOf<Project, EntityIdErrorsDescription<ProjectId>>> projectsExistanceValidator,
+	IAsyncCollectionValidator<IdentitySystemObjectId, OneOf<AppUser, EntityIdErrorsDescription<IdentitySystemObjectId>>> appUserExistanceValidator,
+	IAsyncCollectionValidator<MilestoneId, OneOf<Milestone, EntityIdErrorsDescription<MilestoneId>>> milestoneExistanceValidator)
+	: GenericController<Project, ProjectId, ProjectDto, ProjectsController>(logger, projectsService)
 {
-	// TODO: Rename all of those services to _[entity]AccessService
-	private readonly IEntityAccessService<Project, ProjectId> _projectsService = projectsService;
-	private readonly IEntityAccessService<AppUser, IdentitySystemObjectId> _appUsersService = appUserService;
-	private readonly IEntityAccessService<Milestone, MilestoneId> _milestonesService = milestonesService;
-	private readonly ILogger<StatusesController> _logger = logger;
+	private readonly IAsyncCollectionValidator<ProjectId, OneOf<Project, EntityIdErrorsDescription<ProjectId>>> _projectsExistanceValidator = projectsExistanceValidator;
+	private readonly IAsyncCollectionValidator<IdentitySystemObjectId, OneOf<AppUser, EntityIdErrorsDescription<IdentitySystemObjectId>>> _appUserExistanceValidator = appUserExistanceValidator;
+	private readonly IAsyncCollectionValidator<MilestoneId, OneOf<Milestone, EntityIdErrorsDescription<MilestoneId>>> _milestoneExistanceValidator = milestoneExistanceValidator;
 
-	private ValidationProblemDetails CreateValidationProblemDetails()
-	{
-		return ProblemDetailsFactory.CreateValidationProblemDetails(HttpContext, ModelState);
-	}
-
-	// TODO: This is based on a StronglyTypedId class instead of the interface because the interface can not override the ToString method.
-	private void AddValidationProblem<TEntityId>(ref ValidationProblemDetails? validationProblems, KeyValuePair<TEntityId, string[]> errorDescription)
-		where TEntityId : StronglyTypedId
-	{
-		validationProblems ??= CreateValidationProblemDetails();
-		validationProblems.Errors.Add(errorDescription.Key.ToString(), errorDescription.Value);
-	}
-
-	private static async IAsyncEnumerable<OneOf<TEntity, KeyValuePair<TEntityId, string[]>>> GetEntitiesOrGenerateErrorsIfDoesNotExist<TEntity, TEntityId>(
-		IEnumerable<TEntityId> entityIds,
-		IEntityAccessService<TEntity, TEntityId> entityAccessService)
-		where TEntity : IEntity<TEntityId>
-		where TEntityId : IStronglyTypedId
-	{
-		const string errorMessageTemplate = "{0} with specified Id does not exist.";
-
-		foreach (TEntityId entityId in entityIds)
-		{
-			TEntity? entity = await entityAccessService.Find(entityId);
-
-			yield return entity switch
-			{
-				not null => entity,
-				null => new KeyValuePair<TEntityId, string[]>(entityId, [string.Format(errorMessageTemplate, typeof(TEntity).Name)])
-			};
-		}
-	}
-
-	private IAsyncEnumerable<OneOf<AppUser, KeyValuePair<IdentitySystemObjectId, string[]>>> GetAppUsersOrGenerateErrorsIfDoesNotExist(IEnumerable<IdentitySystemObjectId> memberIdsToFind)
-	{
-		return GetEntitiesOrGenerateErrorsIfDoesNotExist(memberIdsToFind, _appUsersService);
-	}
-
-	private async Task<OneOf<Project, ActionResult>> ValidateAppUsersExistance(Project project, IEnumerable<IdentitySystemObjectId> memberIdsToFind)
-	{
-		ValidationProblemDetails? validationProblems = null;
-
-		await foreach (OneOf<AppUser, KeyValuePair<IdentitySystemObjectId, string[]>> oneOf in GetAppUsersOrGenerateErrorsIfDoesNotExist(memberIdsToFind))
-		{
-			oneOf.Switch(
-				project.Members.Add,
-				errorDescription => AddValidationProblem(ref validationProblems, errorDescription));
-		}
-
-		return validationProblems switch
-		{
-			null => project,
-			not null => ValidationProblem(validationProblems)
-		};
-	}
-
-	private IAsyncEnumerable<OneOf<Milestone, KeyValuePair<MilestoneId, string[]>>> GetMilestonesOrGenerateErrorsIfDoesNotExist(IEnumerable<MilestoneId> milestoneIdsToFind)
-	{
-		return GetEntitiesOrGenerateErrorsIfDoesNotExist(milestoneIdsToFind, _milestonesService);
-	}
-
-	private async Task<OneOf<Project, ActionResult>> ValidateMilestonesExistance(Project project, IEnumerable<MilestoneId> milestoneIdsToFind)
-	{
-		ValidationProblemDetails? validationProblems = null;
-
-		await foreach (OneOf<Milestone, KeyValuePair<MilestoneId, string[]>> oneOf in GetMilestonesOrGenerateErrorsIfDoesNotExist(milestoneIdsToFind))
-		{
-			oneOf.Switch(milestone =>
-			{
-				project.Milestones ??= [];
-				project.Milestones.Add(milestone);
-			},
-			errorDescription => AddValidationProblem(ref validationProblems, errorDescription));
-		}
-
-		return validationProblems switch
-		{
-			null => project,
-			not null => ValidationProblem(validationProblems)
-		};
-	}
-
-	private async Task<OneOf<Project, ActionResult>> ValidateNestedEntitesExistance(Project project, ProjectDto projectDto)
+	private async SysTask ValidateNestedEntitesExistance(Project project, ProjectDto projectDto)
 	{
 		project.Members = [];
 		project.Milestones = [];
-		projectDto.MilestoneIds ??= [];
 
-		IEnumerable<IdentitySystemObjectId> uniqueAppUserIds = projectDto.MemberIds.Distinct();
-		IEnumerable<MilestoneId> uniqueMilestoneIds = projectDto.MilestoneIds.Distinct();
+		await ValidateEntitiesExistance(projectDto.MemberIds, project.Members, _appUserExistanceValidator);
 
-		OneOf<Project, ActionResult> appUsersExistanceValidationResult = await ValidateAppUsersExistance(project, uniqueAppUserIds);
-
-		return await appUsersExistanceValidationResult.Match(
-			project => ValidateMilestonesExistance(project, uniqueMilestoneIds),
-			actionResult => System.Threading.Tasks.Task.FromResult<OneOf<Project, ActionResult>>(actionResult));
+		if (projectDto.MilestoneIds is not null)
+		{
+			await ValidateEntitiesExistance(projectDto.MilestoneIds, project.Milestones, _milestoneExistanceValidator);
+		}
 	}
 
 	private async Task<ActionResult<Project>> AddProject(Project project)
 	{
-		await _projectsService.Add(project);
-		await _projectsService.SaveChanges();
+		await EntityAccessService.Add(project);
+		await EntityAccessService.SaveChanges();
 
 		return CreatedAtAction(nameof(GetProject), new { projectId = project.Id }, project);
 	}
@@ -137,11 +53,9 @@ public sealed class ProjectsController(
 	{
 		Project project = mapper.ToNewDomainModel(projectDto);
 
-		OneOf<Project, ActionResult> nestedEntitesExistanceValidationResult = await ValidateNestedEntitesExistance(project, projectDto);
+		await ValidateNestedEntitesExistance(project, projectDto);
 
-		return await nestedEntitesExistanceValidationResult.Match(
-			AddProject,
-			actionResult => ReturnFromResult<ActionResult<Project>>(actionResult));
+		return ModelState.IsValid ? await AddProject(project) : ValidationProblem(ModelState);
 	}
 
 	[HttpGet("{projectId}")]
@@ -149,7 +63,7 @@ public sealed class ProjectsController(
 	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
 	public async Task<ActionResult<Project>> GetProject(ProjectId projectId)
 	{
-		Project? project = await _projectsService.Find(projectId);
+		Project? project = await EntityAccessService.Find(projectId);
 
 		return project switch
 		{
@@ -162,41 +76,36 @@ public sealed class ProjectsController(
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	public async Task<ActionResult<IEnumerable<Project>>> GetProjects()
 	{
-		IEnumerable<Project> projects = await _projectsService.GetAll();
+		IEnumerable<Project> projects = await EntityAccessService.GetAll();
 
 		return projects.ToList();
 	}
 
-	private async Task<OneOf<Project, ActionResult>> ValidateProjectExistance(ProjectId projectId)
-	{
-		Project? project = await _projectsService.Find(projectId);
-
-		return project switch
-		{
-			not null => project,
-			null => NotFound()
-		};
-	}
-
 	private async Task<ActionResult> UpdateProject(Project project)
 	{
-		await _projectsService.Update(project);
+		await EntityAccessService.Update(project);
 
 		try
 		{
-			await _projectsService.SaveChanges();
+			await EntityAccessService.SaveChanges();
 		}
-		catch (DbUpdateConcurrencyException)
+		catch (DbUpdateConcurrencyException ex)
 		{
-			return NotFound();
+			Logger.LogError(ex, "Concurrency exception occurred while trying to delete the project with id {ProjectId}.", project.Id);
+
+			return Conflict();
 		}
 
 		return Ok();
 	}
 
-	private static Task<T> ReturnFromResult<T>(T result)
+	private async Task<ActionResult> PutExistingProject(Project existingProject, ProjectDto projectDto, [FromServices] IMapper<Project, ProjectId, ProjectDto> mapper)
 	{
-		return System.Threading.Tasks.Task.FromResult(result);
+		mapper.ToExistingDomainModel(projectDto, existingProject);
+
+		await ValidateNestedEntitesExistance(existingProject, projectDto);
+
+		return ModelState.IsValid ? await UpdateProject(existingProject) : ValidationProblem(ModelState);
 	}
 
 	[HttpPut]
@@ -204,22 +113,11 @@ public sealed class ProjectsController(
 	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
 	public async Task<ActionResult> PutProject(ProjectId projectId, ProjectDto projectDto, [FromServices] IMapper<Project, ProjectId, ProjectDto> mapper)
 	{
-		async Task<ActionResult> PutProject(Project project)
-		{
-			mapper.ToExistingDomainModel(projectDto, project);
+		OneOf<Project, Error> validationResult = await ValidateEntityExistance(projectId, _projectsExistanceValidator);
 
-			OneOf<Project, ActionResult> nestedEntitesExistanceValidationResult = await ValidateNestedEntitesExistance(project, projectDto);
-
-			return await nestedEntitesExistanceValidationResult.Match(
-				UpdateProject,
-				ReturnFromResult);
-		}
-
-		OneOf<Project, ActionResult> projectExistanceValidationResult = await ValidateProjectExistance(projectId);
-
-		return await projectExistanceValidationResult.Match(
-			PutProject,
-			ReturnFromResult);
+		return await validationResult.Match(
+			project => PutExistingProject(project, projectDto, mapper),
+			_ => SysTask.FromResult(ValidationProblem(ModelState)));
 	}
 
 	[HttpDelete("{projectId}")]
@@ -227,26 +125,32 @@ public sealed class ProjectsController(
 	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound), ProducesResponseType(StatusCodes.Status409Conflict)]
 	public async Task<IActionResult> DeleteProject(ProjectId projectId)
 	{
-		Project? project = await _projectsService.Find(projectId);
+		Project? project = await EntityAccessService.Find(projectId);
 
 		if (project is null)
 		{
 			return NotFound();
 		}
 
-		await _projectsService.Remove(project);
+		await EntityAccessService.Remove(project);
 
 		try
 		{
-			await _projectsService.SaveChanges();
+			await EntityAccessService.SaveChanges();
 
 			return Ok();
 		}
 		catch (DbUpdateConcurrencyException ex)
 		{
-			_logger.LogError(ex, "Concurrency exception occurred while trying to delete the project with id {ProjectId}.", projectId);
+			Logger.LogError(ex, "Concurrency exception occurred while trying to delete the project with id {ProjectId}.", projectId);
 
 			return Conflict();
+		}
+		catch (Exception ex)
+		{
+			Logger.LogError(ex, "Unexpected exception occurred in {ActionName} endpoint.", nameof(DeleteProject));
+
+			throw;
 		}
 	}
 }
