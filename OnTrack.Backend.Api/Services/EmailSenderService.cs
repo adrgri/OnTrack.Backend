@@ -13,6 +13,7 @@ public sealed class EmailSenderService<TUser> : IEmailSender<TUser>
 {
 	private readonly SmtpEmailServicesOptions _options;
 
+	// TODO: Add logging of send emails
 	public EmailSenderService(IOptions<SmtpEmailServicesOptions> options)
 	{
 		_options = options.Value;
@@ -34,7 +35,7 @@ public sealed class EmailSenderService<TUser> : IEmailSender<TUser>
 		};
 	}
 
-	public async Task SendConfirmationLinkAsync(TUser user, string email, string confirmationLink)
+	public async SysTask SendConfirmationLinkAsync(TUser user, string email, string confirmationLink)
 	{
 		using MailMessage mailMessage = new(CreateSenderMailAddress(), new(email))
 		{
@@ -48,7 +49,7 @@ public sealed class EmailSenderService<TUser> : IEmailSender<TUser>
 		await smtpClient.SendMailAsync(mailMessage);
 	}
 
-	public async Task SendPasswordResetLinkAsync(TUser user, string email, string resetLink)
+	public async SysTask SendPasswordResetLinkAsync(TUser user, string email, string resetLink)
 	{
 		using MailMessage mailMessage = new(CreateSenderMailAddress(), new(email))
 		{
@@ -62,11 +63,13 @@ public sealed class EmailSenderService<TUser> : IEmailSender<TUser>
 		await smtpClient.SendMailAsync(mailMessage);
 	}
 
-	public async Task SendPasswordResetCodeAsync(TUser user, string email, string resetCode)
+	public async SysTask SendPasswordResetCodeAsync(TUser user, string email, string resetCode)
 	{
 		using MailMessage mailMessage = new(CreateSenderMailAddress(), new(email))
 		{
 			Subject = "Reset your password",
+			// TODO: Replace the resetCode with a link to the reset password page just as in methods above?
+			// Why did Microsoft's employees implemented this one method in the identity API differently???
 			Body = $"Please reset your password using the following code: {resetCode}",
 			IsBodyHtml = true
 		};

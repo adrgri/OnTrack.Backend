@@ -2,58 +2,79 @@
 
 using OnTrack.Backend.Api.Models;
 
-using Task = System.Threading.Tasks.Task;
-
 namespace OnTrack.Backend.Api.Services;
 
 // TODO: Add remarks telling that this class relies on the DbContext to have appropriate DbSet<TEntity> properties, maybe add a sanity check in the app startup to check for those properties
-public class EfEntityAccessService<TDbContext, TEntity, TEntityId>(TDbContext context)
+/*/ This class can not be abstract since DI container must be able to create instances of it (if you don't create concrete child classes for every Entity) /*/
+public class EfEntityAccessService<TEntity, TEntityId, TDbContext>(TDbContext context)
 	: IEntityAccessService<TEntity, TEntityId>
-	where TDbContext : DbContext
 	where TEntity : class, IEntity<TEntityId>
 	where TEntityId : IStronglyTypedId
+	where TDbContext : DbContext
 {
-	private readonly TDbContext _context = context;
+	protected TDbContext Context { get; } = context;
 
-	public virtual async Task Add(TEntity entity)
+	public virtual async SysTask Add(TEntity entity, CancellationToken cancellationToken)
 	{
-		_ = await _context.AddAsync(entity);
+		cancellationToken.ThrowIfCancellationRequested();
+
+		_ = await Context.AddAsync(entity, cancellationToken);
 	}
 
-	public virtual async Task<TEntity?> Find(TEntityId id)
+	public virtual async Task<TEntity?> Find(TEntityId id, CancellationToken cancellationToken)
 	{
-		return await _context.FindAsync<TEntity>(id);
+		cancellationToken.ThrowIfCancellationRequested();
+
+		return await Context.FindAsync<TEntity>([id], cancellationToken);
 	}
 
-	public async Task<bool> Exists(TEntityId id)
+	public virtual async Task<bool> Exists(TEntityId id, CancellationToken cancellationToken)
 	{
-		return (await _context.FindAsync<TEntity>(id)) is not null;
+		cancellationToken.ThrowIfCancellationRequested();
+
+		return (await Find(id, cancellationToken)) is not null;
 
 		// TODO: Zrób benchmark i sprawdź, która metoda będzie szybsza, czy ta powyżej czy ta poniżej. Może porównaj też ze starszymy wersjami EF?
 		//return await _context.Set<TEntity>().AnyAsync(e => e.Id.Equals(id));
 	}
 
-	public virtual async Task<IEnumerable<TEntity>> GetAll()
+	public virtual async Task<IEnumerable<TEntity>> GetAll(CancellationToken cancellationToken)
 	{
-		return await _context.Set<TEntity>().ToListAsync();
+		cancellationToken.ThrowIfCancellationRequested();
+
+		return await Context.Set<TEntity>().ToListAsync(cancellationToken);
 	}
 
-	public virtual Task Update(TEntity entity)
+	public virtual SysTask Update(TEntity entity, CancellationToken cancellationToken)
 	{
-		_context.Entry(entity).State = EntityState.Modified;
+		cancellationToken.ThrowIfCancellationRequested();
 
-		return Task.CompletedTask;
+		Context.Entry(entity).State = EntityState.Modified;
+
+		return SysTask.CompletedTask;
 	}
 
-	public virtual Task Remove(TEntity entity)
+	public virtual SysTask Remove(TEntity entity, CancellationToken cancellationToken)
 	{
-		_ = _context.Remove(entity);
+		cancellationToken.ThrowIfCancellationRequested();
 
-		return Task.CompletedTask;
+		_ = Context.Remove(entity);
+
+		return SysTask.CompletedTask;
 	}
 
-	public virtual async Task SaveChanges()
+	public virtual IQueryable<TEntity> Query(CancellationToken cancellationToken)
 	{
-		_ = await _context.SaveChangesAsync();
+		cancellationToken.ThrowIfCancellationRequested();
+
+		return Context.Set<TEntity>()
+			.AsQueryable();
+	}
+
+	public virtual async SysTask SaveChanges(CancellationToken cancellationToken)
+	{
+		cancellationToken.ThrowIfCancellationRequested();
+
+		_ = await Context.SaveChangesAsync(cancellationToken);
 	}
 }
