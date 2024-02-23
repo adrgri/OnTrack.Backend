@@ -16,7 +16,6 @@ namespace OnTrack.Backend.Api.Application.Mappings
             }
             entity.Title = dto.Title;
             entity.Description = dto.Description;
-            entity.ImagePath = dto.ImagePath;
             entity.Members = MapToICollection(dto.MemberIds);
         }
 
@@ -32,7 +31,6 @@ namespace OnTrack.Backend.Api.Application.Mappings
             }
             dto.Title = entity.Title;
             dto.Description = entity.Description;
-            dto.ImagePath = entity.ImagePath;
             dto.MemberIds = MapToICollection5(entity.Members);
         }
 
@@ -49,7 +47,6 @@ namespace OnTrack.Backend.Api.Application.Mappings
             }
             target.Title = dto.Title;
             target.Description = dto.Description;
-            target.ImagePath = dto.ImagePath;
             target.Members = MapToICollection4(dto.MemberIds);
             return target;
         }
@@ -67,7 +64,6 @@ namespace OnTrack.Backend.Api.Application.Mappings
             }
             target.Title = entity.Title;
             target.Description = entity.Description;
-            target.ImagePath = entity.ImagePath;
             target.MemberIds = MapToICollection2(entity.Members);
             return target;
         }

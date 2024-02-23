@@ -9,5 +9,5 @@ public sealed record class Icon : IEntity<IconId>
 {
 	public IconId Id { get; set; }
 	public string Name { get; set; }
-	public PathString FilePath { get; set; }
+	//public PathString FilePath { get; set; }
 }

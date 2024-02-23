@@ -7,7 +7,7 @@ public sealed record class ProjectDto : IDto
 {
 	public string Title { get; set; }
 	public string? Description { get; set; }
-	public PathString? ImagePath { get; set; }
+	//public PathString? ImagePath { get; set; }
 	[MustContainAtLeastOneElement]
 	public ICollection<IdentitySystemObjectId> MemberIds { get; set; }
 	public ICollection<MilestoneId>? MilestoneIds { get; set; }

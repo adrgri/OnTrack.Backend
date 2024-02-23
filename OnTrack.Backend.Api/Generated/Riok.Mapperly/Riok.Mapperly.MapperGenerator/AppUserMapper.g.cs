@@ -18,7 +18,6 @@ namespace OnTrack.Backend.Api.Application.Mappings
             entity.LastName = dto.LastName;
             entity.Bio = dto.Bio;
             entity.Language = dto.Language;
-            entity.ProfilePicturePath = dto.ProfilePicturePath;
             entity.UserName = dto.UserName;
             entity.Email = dto.Email;
             entity.EmailConfirmed = dto.EmailConfirmed;
@@ -46,7 +45,6 @@ namespace OnTrack.Backend.Api.Application.Mappings
             dto.LastName = entity.LastName;
             dto.Bio = entity.Bio;
             dto.Language = entity.Language;
-            dto.ProfilePicturePath = entity.ProfilePicturePath;
             dto.EmailConfirmed = entity.EmailConfirmed;
             dto.PhoneNumber = entity.PhoneNumber;
             dto.PhoneNumberConfirmed = entity.PhoneNumberConfirmed;
@@ -71,7 +69,6 @@ namespace OnTrack.Backend.Api.Application.Mappings
             target.LastName = dto.LastName;
             target.Bio = dto.Bio;
             target.Language = dto.Language;
-            target.ProfilePicturePath = dto.ProfilePicturePath;
             target.UserName = dto.UserName;
             target.Email = dto.Email;
             target.EmailConfirmed = dto.EmailConfirmed;
@@ -101,7 +98,6 @@ namespace OnTrack.Backend.Api.Application.Mappings
             target.LastName = entity.LastName;
             target.Bio = entity.Bio;
             target.Language = entity.Language;
-            target.ProfilePicturePath = entity.ProfilePicturePath;
             target.EmailConfirmed = entity.EmailConfirmed;
             target.PhoneNumber = entity.PhoneNumber;
             target.PhoneNumberConfirmed = entity.PhoneNumberConfirmed;

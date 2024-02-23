@@ -7,20 +7,17 @@ namespace OnTrack.Backend.Api.Application.Mappings
         public override partial void ToExistingDomainModel(global::OnTrack.Backend.Api.Dto.AttachmentDto dto, global::OnTrack.Backend.Api.Models.Attachment entity)
         {
             entity.DisplayName = dto.DisplayName;
-            entity.Path = dto.Path;
         }
 
         public override partial void ToExistingDto(global::OnTrack.Backend.Api.Models.Attachment entity, global::OnTrack.Backend.Api.Dto.AttachmentDto dto)
         {
             dto.DisplayName = entity.DisplayName;
-            dto.Path = entity.Path;
         }
 
         public override partial global::OnTrack.Backend.Api.Models.Attachment ToNewDomainModel(global::OnTrack.Backend.Api.Dto.AttachmentDto dto)
         {
             var target = new global::OnTrack.Backend.Api.Models.Attachment();
             target.DisplayName = dto.DisplayName;
-            target.Path = dto.Path;
             return target;
         }
 
@@ -28,7 +25,6 @@ namespace OnTrack.Backend.Api.Application.Mappings
         {
             var target = new global::OnTrack.Backend.Api.Dto.AttachmentDto();
             target.DisplayName = entity.DisplayName;
-            target.Path = entity.Path;
             return target;
         }
     }

@@ -32,7 +32,7 @@ public sealed record class AppUserDto : IDto
 	[ProtectedPersonalData]
 	public Language? Language { get; set; }
 
-	public PathString? ProfilePicturePath { get; set; }
+	//public PathString? ProfilePicturePath { get; set; }
 
 	public ICollection<ProjectId>? ProjectIds { get; set; }
 
