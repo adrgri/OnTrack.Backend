@@ -13,21 +13,21 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 
+using OneOf;
+
 using OnTrack.Backend.Api.Application.Mappings;
 using OnTrack.Backend.Api.Configuration;
 using OnTrack.Backend.Api.DataAccess;
 using OnTrack.Backend.Api.Dto;
 using OnTrack.Backend.Api.Models;
 using OnTrack.Backend.Api.Services;
+using OnTrack.Backend.Api.Validation;
 
 using Serilog;
 
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 using static OnTrack.Backend.Api.AppCore;
-
-using Project = OnTrack.Backend.Api.Models.Project;
-using Task = OnTrack.Backend.Api.Models.Task;
 
 namespace OnTrack.Backend.Api;
 
@@ -67,7 +67,7 @@ internal static class AppExtensions
 
 	public static void ConfigureOptions(this WebApplicationBuilder builder, ILogger<Program> logger)
 	{
-		ConfigurationCore(() =>
+		ConfigurationWrapper(() =>
 		{
 			logger.LogInformation("Adding {options}...", nameof(SmtpEmailServicesOptions));
 			builder.ConfigureSmtpEmailServicesOptions();
@@ -230,7 +230,7 @@ internal static class AppExtensions
 	/// </summary>
 	public static void ConfigureServices(this WebApplicationBuilder builder, ILogger<Program> logger)
 	{
-		ConfigurationCore(() =>
+		ConfigurationWrapper(() =>
 		{
 			builder.Services.AddHsts(options => options.IncludeSubDomains = true);
 			builder.Services.AddAntiforgery();
@@ -245,7 +245,7 @@ internal static class AppExtensions
 				{
 					options.EnableDetailedErrors();
 				}
-			});
+			} /* If you ever see concurrent exception being thrown by EF Core this might help: contextLifetime: ServiceLifetime.Transient */);
 
 			if (builder.Environment.IsProduction() == false)
 			{
@@ -279,55 +279,81 @@ internal static class AppExtensions
 
 	private static void ConfigureEmailServices(WebApplicationBuilder builder, ILogger<Program> logger)
 	{
-		SmtpEmailServicesOptions? smtpEmailServicesOptions = builder.Configuration
-			.GetSection(ConfigurationKeys.Smtp)
-			.Get<SmtpEmailServicesOptions>();
-
-		if (smtpEmailServicesOptions?.Enabled == true)
+		ConfigurationWrapper(() =>
 		{
-			builder.Services.AddTransient<IEmailSender<AppUser>, EmailSenderService<AppUser>>();
-		}
+			SmtpEmailServicesOptions? smtpEmailServicesOptions = builder.Configuration
+				.GetSection(ConfigurationKeys.Smtp)
+				.Get<SmtpEmailServicesOptions>();
+
+			if (smtpEmailServicesOptions?.Enabled == true)
+			{
+				builder.Services.AddTransient<IEmailSender<AppUser>, EmailSenderService<AppUser>>();
+			}
+		}, "Email services", logger);
 	}
 
 	private static void ConfigureDataAccessServices(WebApplicationBuilder builder, ILogger<Program> logger)
 	{
-		builder.Services.AddTransient<IEntityAccessService<AppUser, IdentitySystemObjectId>, EfAppUsersAccessService<AppDbContext>>();
-		builder.Services.AddTransient<IEntityAccessService<Attachment, AttachmentId>, EfAttachmentsAccessService<AppDbContext>>();
-		builder.Services.AddTransient<IEntityAccessService<Icon, IconId>, EfIconsAccessService<AppDbContext>>();
-		builder.Services.AddTransient<IEntityAccessService<Language, LanguageId>, EfLanguagesAccessService<AppDbContext>>();
-		builder.Services.AddTransient<IEntityAccessService<Milestone, MilestoneId>, EfMilestonesAccessService<AppDbContext>>();
-		builder.Services.AddTransient<IEntityAccessService<Project, ProjectId>, EfProjectsAccessService<AppDbContext>>();
-		builder.Services.AddTransient<IEntityAccessService<Resource, ResourceId>, EfResourcesAccessService<AppDbContext>>();
-		builder.Services.AddTransient<IEntityAccessService<Status, StatusId>, EfStatusesAccessService<AppDbContext>>();
-		builder.Services.AddTransient<IEntityAccessService<Task, TaskId>, EfTasksAccessService<AppDbContext>>();
+		ConfigurationWrapper(() =>
+		{
+			builder.Services.AddTransient<IEntityAccessService<AppUser, IdentitySystemObjectId>, EfAppUsersAccessService<AppDbContext>>();
+			builder.Services.AddTransient<IEntityAccessService<Attachment, AttachmentId>, EfEntityAccessService<Attachment, AttachmentId, AppDbContext>>();
+			builder.Services.AddTransient<IEntityAccessService<Icon, IconId>, EfEntityAccessService<Icon, IconId, AppDbContext>>();
+			builder.Services.AddTransient<IEntityAccessService<Language, LanguageId>, EfEntityAccessService<Language, LanguageId, AppDbContext>>();
+			builder.Services.AddTransient<IEntityAccessService<Milestone, MilestoneId>, EfMilestonesAccessService<AppDbContext>>();
+			builder.Services.AddTransient<IEntityAccessService<Project, ProjectId>, EfProjectsAccessService<AppDbContext>>();
+			builder.Services.AddTransient<IEntityAccessService<Resource, ResourceId>, EfEntityAccessService<Resource, ResourceId, AppDbContext>>();
+			builder.Services.AddTransient<IEntityAccessService<Status, StatusId>, EfEntityAccessService<Status, StatusId, AppDbContext>>();
+			builder.Services.AddTransient<IEntityAccessService<Task, TaskId>, EfTasksAccessService<AppDbContext>>();
+		}, "Data access services", logger);
 	}
 
 	private static void ConfigureModelMappings(WebApplicationBuilder builder, ILogger<Program> logger)
 	{
-		builder.Services.AddSingleton<IMapper<AppUser, IdentitySystemObjectId, AppUserDto>, AppUserMapper>();
-		builder.Services.AddSingleton<IMapper<Attachment, AttachmentId, AttachmentDto>, AttachmentMapper>();
-		builder.Services.AddSingleton<IMapper<Icon, IconId, IconDto>, IconMapper>();
-		builder.Services.AddSingleton<IMapper<Language, LanguageId, LanguageDto>, LanguageMapper>();
-		builder.Services.AddSingleton<IMapper<Milestone, MilestoneId, MilestoneDto>, MilestoneMapper>();
-		builder.Services.AddSingleton<IMapper<Project, ProjectId, ProjectDto>, ProjectMapper>();
-		builder.Services.AddSingleton<IMapper<Resource, ResourceId, ResourceDto>, ResourceMapper>();
-		builder.Services.AddSingleton<IMapper<Status, StatusId, StatusDto>, StatusMapper>();
-		builder.Services.AddSingleton<IMapper<Task, TaskId, TaskDto>, TaskMapper>();
+		ConfigurationWrapper(() =>
+		{
+			builder.Services.AddSingleton<IMapper<AppUser, IdentitySystemObjectId, AppUserDto>, AppUserMapper>();
+			builder.Services.AddSingleton<IMapper<Attachment, AttachmentId, AttachmentDto>, AttachmentMapper>();
+			builder.Services.AddSingleton<IMapper<Icon, IconId, IconDto>, IconMapper>();
+			builder.Services.AddSingleton<IMapper<Language, LanguageId, LanguageDto>, LanguageMapper>();
+			builder.Services.AddSingleton<IMapper<Milestone, MilestoneId, MilestoneDto>, MilestoneMapper>();
+			builder.Services.AddSingleton<IMapper<Project, ProjectId, ProjectDto>, ProjectMapper>();
+			builder.Services.AddSingleton<IMapper<Resource, ResourceId, ResourceDto>, ResourceMapper>();
+			builder.Services.AddSingleton<IMapper<Status, StatusId, StatusDto>, StatusMapper>();
+			builder.Services.AddSingleton<IMapper<Task, TaskId, TaskDto>, TaskMapper>();
+		}, "Model mappers", logger);
+	}
+
+	private static void ConfigureValidators(WebApplicationBuilder builder, ILogger<Program> logger)
+	{
+		ConfigurationWrapper(() =>
+		{
+			builder.Services.AddTransient<IAsyncCollectionValidator<IdentitySystemObjectId, OneOf<AppUser, EntityIdErrorsDescription<IdentitySystemObjectId>>>, EntityByIdExistenceValidator<IdentitySystemObjectId, AppUser>>();
+			builder.Services.AddTransient<IAsyncCollectionValidator<AttachmentId, OneOf<Attachment, EntityIdErrorsDescription<AttachmentId>>>, EntityByIdExistenceValidator<AttachmentId, Attachment>>();
+			builder.Services.AddTransient<IAsyncCollectionValidator<IconId, OneOf<Icon, EntityIdErrorsDescription<IconId>>>, EntityByIdExistenceValidator<IconId, Icon>>();
+			builder.Services.AddTransient<IAsyncCollectionValidator<LanguageId, OneOf<Language, EntityIdErrorsDescription<LanguageId>>>, EntityByIdExistenceValidator<LanguageId, Language>>();
+			builder.Services.AddTransient<IAsyncCollectionValidator<MilestoneId, OneOf<Milestone, EntityIdErrorsDescription<MilestoneId>>>, EntityByIdExistenceValidator<MilestoneId, Milestone>>();
+			builder.Services.AddTransient<IAsyncCollectionValidator<ProjectId, OneOf<Project, EntityIdErrorsDescription<ProjectId>>>, EntityByIdExistenceValidator<ProjectId, Project>>();
+			builder.Services.AddTransient<IAsyncCollectionValidator<ResourceId, OneOf<Resource, EntityIdErrorsDescription<ResourceId>>>, EntityByIdExistenceValidator<ResourceId, Resource>>();
+			builder.Services.AddTransient<IAsyncCollectionValidator<StatusId, OneOf<Status, EntityIdErrorsDescription<StatusId>>>, EntityByIdExistenceValidator<StatusId, Status>>();
+			builder.Services.AddTransient<IAsyncCollectionValidator<TaskId, OneOf<Task, EntityIdErrorsDescription<TaskId>>>, EntityByIdExistenceValidator<TaskId, Task>>();
+		}, "Validators", logger);
 	}
 
 	public static void ConfigureDependencies(this WebApplicationBuilder builder, ILogger<Program> logger)
 	{
-		ConfigurationCore(() =>
+		ConfigurationWrapper(() =>
 		{
 			ConfigureEmailServices(builder, logger);
 			ConfigureDataAccessServices(builder, logger);
 			ConfigureModelMappings(builder, logger);
+			ConfigureValidators(builder, logger);
 		}, "Dependencies", logger);
 	}
 
 	public static void ConfigureWebHost(this WebApplicationBuilder builder, ILogger<Program> logger)
 	{
-		ConfigurationCore(() => builder.WebHost.UseQuic(), "WebHost", logger);
+		ConfigurationWrapper(() => builder.WebHost.UseQuic(), nameof(builder.WebHost), logger);
 	}
 
 	public static WebApplication BuildApplication(this WebApplicationBuilder builder, ILogger<Program> logger)
@@ -364,7 +390,7 @@ internal static class AppExtensions
 	/// </remarks>
 	public static void ConfigureRequestPipeline(this WebApplication app, ILogger<Program> logger)
 	{
-		ConfigurationCore(() =>
+		ConfigurationWrapper(() =>
 		{
 			app.UseHttpsRedirection();
 			app.UseHsts();
@@ -393,6 +419,7 @@ internal static class AppExtensions
 			{
 				options.Tags.Clear();
 				options.Tags.Add(new OpenApiTag() { Name = "Identity" });
+
 				return options;
 			});
 
