@@ -6,7 +6,7 @@ using OnTrack.Backend.Api.Models;
 
 namespace OnTrack.Backend.Api.Infrastructure.DataAccess;
 
-/*/ This class can not be abstract since EF Core must be able to create instances of it (if you don't create concrete child classes anywhere) /*/
+/*/ This class can not be abstract since EF Core must be able to create instances of it (if you don't create concrete child classes for every Entity) /*/
 public class StronglyTypedIdEntityConfiguration<TEntityId, TEntity> : IStronglyTypedIdConverter<TEntityId>, IEntityTypeConfiguration<TEntity>
 	where TEntityId : IStronglyTypedId, new()
 	where TEntity : class, IEntity<TEntityId>
