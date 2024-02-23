@@ -53,7 +53,7 @@ public sealed class LanguagesController(IEntityAccessService<Language, LanguageI
 
 	[HttpPut]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
+	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound), ProducesResponseType(StatusCodes.Status409Conflict)]
 	public async Task<IActionResult> PutLanguage(LanguageId languageId, LanguageDto languageDto, [FromServices] IMapper<Language, LanguageId, LanguageDto> mapper)
 	{
 		Language? language = await _languagesService.Find(languageId);
@@ -70,14 +70,18 @@ public sealed class LanguagesController(IEntityAccessService<Language, LanguageI
 		try
 		{
 			await _languagesService.SaveChanges();
-		}
-		catch (DbUpdateConcurrencyException)
-		{
-			return NotFound();
-		}
 
-		return Ok();
+			return Ok();
+		}
+		catch (DbUpdateConcurrencyException ex)
+		{
+			_logger.LogError(ex, _concurrencyErrorMessageTemplate, "Update", languageId);
+
+			return Conflict();
+		}
 	}
+
+	private const string _concurrencyErrorMessageTemplate = "Concurrency exception occurred while trying to {Action} the language with id {LanguageId}.";
 
 	[HttpDelete("{languageId}")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
@@ -96,14 +100,17 @@ public sealed class LanguagesController(IEntityAccessService<Language, LanguageI
 		try
 		{
 			await _languagesService.SaveChanges();
-
 			return Ok();
 		}
 		catch (DbUpdateConcurrencyException ex)
 		{
-			_logger.LogError(ex, "Concurrency exception occurred while trying to delete the language with id {LanguageId}.", languageId);
-
+			_logger.LogError(ex, _concurrencyErrorMessageTemplate, "delete", languageId);
 			return Conflict();
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Unexpected exception occurred in {ActionName} endpoint.", nameof(DeleteLanguage));
+			throw;
 		}
 	}
 }

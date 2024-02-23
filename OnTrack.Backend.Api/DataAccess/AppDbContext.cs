@@ -3,8 +3,6 @@ using Microsoft.EntityFrameworkCore;
 
 using OnTrack.Backend.Api.Models;
 
-using Task = OnTrack.Backend.Api.Models.Task;
-
 namespace OnTrack.Backend.Api.DataAccess;
 
 public sealed class AppDbContext(DbContextOptions<AppDbContext> options)

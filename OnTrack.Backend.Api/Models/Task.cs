@@ -4,6 +4,7 @@ using OnTrack.Backend.Api.Infrastructure.DataAccess;
 
 namespace OnTrack.Backend.Api.Models;
 
+// TODO: Zmień nazwę tej klasy na coś innego, bo jest konflikt z klasą Task z namespace'a System.Threading.Tasks :/
 [EntityTypeConfiguration<StronglyTypedIdEntityConfiguration<TaskId, Task>, Task>]
 public sealed record class Task : IEntity<TaskId>
 {

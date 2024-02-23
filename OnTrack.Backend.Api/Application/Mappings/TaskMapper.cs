@@ -3,8 +3,6 @@ using OnTrack.Backend.Api.Models;
 
 using Riok.Mapperly.Abstractions;
 
-using Task = OnTrack.Backend.Api.Models.Task;
-
 namespace OnTrack.Backend.Api.Application.Mappings;
 
 [Mapper]
