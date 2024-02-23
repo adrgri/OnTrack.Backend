@@ -1,50 +1,38 @@
 ﻿//using Microsoft.AspNetCore.Mvc;
 //using Microsoft.EntityFrameworkCore;
 
-//using OnTrack.Backend.Api.Data;
 //using OnTrack.Backend.Api.Dto;
 //using OnTrack.Backend.Api.Models;
+//using OnTrack.Backend.Api.Services;
 
 //namespace OnTrack.Backend.Api.Controllers;
 
 //[ApiController, Route("/api/icon")]
-//public class IconsController(ILogger<StatusesController> logger, ApplicationDbContext context)
+//public class IconsController(IEntityAccessService<Icon, IconId> iconsService, ILogger<StatusesController> logger)
 //	: ControllerBase
 //{
+//	private readonly IEntityAccessService<Icon, IconId> _iconsService = iconsService;
 //	private readonly ILogger<StatusesController> _logger = logger;
-//	private readonly ApplicationDbContext _context = context;
-
-//	private bool IconExists(IconId id)
-//	{
-//		return _context.Icons.Any(e => e.Id == id);
-//	}
 
 //	[HttpPost]
 //	[ProducesResponseType(StatusCodes.Status201Created)]
-//	[ProducesResponseType(StatusCodes.Status400BadRequest)]
+//	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status400BadRequest)]
 //	public async Task<ActionResult<Icon>> PostIcon(Icon icon)
 //	{
 //		//Status status = createStatusDto.ToDomainModel();
 
-//		_ = _context.Icons.Add(icon);
-//		_ = await _context.SaveChangesAsync();
+//		await _iconsService.Add(icon);
+//		await _iconsService.SaveChanges();
 
 //		return CreatedAtAction(nameof(GetIcon), new { iconId = icon.Id }, icon);
 //	}
 
-//	[HttpGet]
-//	[ProducesResponseType(StatusCodes.Status200OK)]
-//	public async Task<ActionResult<IEnumerable<Icon>>> GetIcons()
-//	{
-//		return await _context.Icons.ToListAsync();
-//	}
-
 //	[HttpGet("{iconId}")]
 //	[ProducesResponseType(StatusCodes.Status200OK)]
-//	[ProducesResponseType(StatusCodes.Status404NotFound)]
+//	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
 //	public async Task<ActionResult<Icon>> GetIcon(IconId iconId)
 //	{
-//		Icon? icon = await _context.Icons.FindAsync(iconId);
+//		Icon? icon = await _iconsService.Find(iconId);
 
 //		return icon switch
 //		{
@@ -53,9 +41,18 @@
 //		};
 //	}
 
+//	[HttpGet]
+//	[ProducesResponseType(StatusCodes.Status200OK)]
+//	public async Task<ActionResult<IEnumerable<Icon>>> GetIcons()
+//	{
+//		IEnumerable<Icon> icons = await _iconsService.GetAll();
+
+//		return icons.ToList();
+//	}
+
 //	[HttpPut]
 //	[ProducesResponseType(StatusCodes.Status200OK)]
-//	[ProducesResponseType(StatusCodes.Status404NotFound)]
+//	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
 //	public async Task<IActionResult> PutIcon(Icon icon)
 //	{
 //		_context.Entry(icon).State = EntityState.Modified;
@@ -74,7 +71,7 @@
 
 //	[HttpDelete("{iconId}")]
 //	[ProducesResponseType(StatusCodes.Status200OK)]
-//	[ProducesResponseType(StatusCodes.Status404NotFound), ProducesResponseType(StatusCodes.Status409Conflict)]
+//	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound), ProducesResponseType(StatusCodes.Status409Conflict)]
 //	public async Task<IActionResult> DeleteIcon(IconId iconId)
 //	{
 //		Icon? icon = await _context.Icons.FindAsync(iconId);
