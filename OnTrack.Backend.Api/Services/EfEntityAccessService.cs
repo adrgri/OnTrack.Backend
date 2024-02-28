@@ -18,6 +18,10 @@ public class EfEntityAccessService<TEntity, TEntityId, TDbContext>(TDbContext co
 	{
 		cancellationToken.ThrowIfCancellationRequested();
 
+#if ApplicationGeneratedGuidIdsAllowed == false
+		Guard.Against.InsertingEntitiesWithApplicationGeneratedGuidIds<TEntity, TEntityId>(entity);
+#endif
+
 		_ = await Context.AddAsync(entity, cancellationToken);
 	}
 
