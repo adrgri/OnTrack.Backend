@@ -24,7 +24,7 @@ try
 
 	app.SanityCheck(logger);
 
-	app.Run(logger);
+	await app.RunAsync(logger);
 }
 finally
 {

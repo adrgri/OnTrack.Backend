@@ -60,7 +60,7 @@ internal static class AppExtensions
 	private static void ConfigureSmtpEmailServicesOptions(this WebApplicationBuilder builder)
 	{
 		builder.Services.AddOptions<SmtpEmailServicesOptions>()
-			.Bind(builder.Configuration.GetRequiredSection(ConfigurationKeys.Smtp))
+			.Bind(builder.Configuration.GetRequiredSection(ConfigurationSectionKeys.Smtp))
 			.ValidateDataAnnotations()
 			.ValidateOnStart();
 	}
@@ -78,7 +78,7 @@ internal static class AppExtensions
 	{
 		logger.LogInformation("Configuring {ConfigurationName}...", "Default CORS policy");
 
-		string corsConfigurationSectionKey = ConfigurationKeys.Cors;
+		string corsConfigurationSectionKey = ConfigurationSectionKeys.Cors;
 
 		CorsConfiguration? corsConfiguration = builder.Configuration
 			.GetSection(corsConfigurationSectionKey)
@@ -237,9 +237,9 @@ internal static class AppExtensions
 
 			builder.Services.AddDbContext<AppDbContext>(options =>
 			{
-				string sqlDefaultConnectionString = string.Concat(ConfigurationKeys.ConnectionStringsSectionPrefix, ConfigurationKeys.SqlDefault);
+				string sqlDefaultDatabaseConnectionString = string.Concat(ConfigurationSectionKeys.ConnectionStrings, ":", ConfigurationKeys.SqlDefaultDatabase);
 
-				options.UseSqlServer(builder.Configuration.GetRequiredSection(sqlDefaultConnectionString).Value);
+				options.UseSqlServer(builder.Configuration.GetRequiredSection(sqlDefaultDatabaseConnectionString).Value);
 
 				if (builder.Environment.IsProduction() == false)
 				{
@@ -282,7 +282,7 @@ internal static class AppExtensions
 		ConfigurationWrapper(() =>
 		{
 			SmtpEmailServicesOptions? smtpEmailServicesOptions = builder.Configuration
-				.GetSection(ConfigurationKeys.Smtp)
+				.GetSection(ConfigurationSectionKeys.Smtp)
 				.Get<SmtpEmailServicesOptions>();
 
 			if (smtpEmailServicesOptions?.Enabled == true)
@@ -456,9 +456,9 @@ internal static class AppExtensions
 	}
 
 	/// <summary>
-	/// <inheritdoc cref="WebApplication.Run(string)"/>
+	/// <inheritdoc cref="WebApplication.RunAsync(string)"/>
 	/// </summary>
-	public static void Run(this WebApplication app, ILogger<Program> logger)
+	public static async SysTask RunAsync(this WebApplication app, ILogger<Program> logger)
 	{
 		//ConfigurationCore(() =>
 		//{
@@ -469,7 +469,7 @@ internal static class AppExtensions
 
 		try
 		{
-			app.Run();
+			await app.RunAsync();
 		}
 		catch (Exception ex)
 		{

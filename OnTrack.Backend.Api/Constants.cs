@@ -6,8 +6,12 @@ public static class Constants
 {
 	public static class ConfigurationKeys
 	{
-		public static string ConnectionStringsSectionPrefix => "ConnectionStrings:";
-		public static string SqlDefault => "SqlDatabase";
+		public const string SqlDefaultDatabase = "SqlDatabase";
+	}
+
+	public static class ConfigurationSectionKeys
+	{
+		public const string ConnectionStrings = "ConnectionStrings";
 
 		public static string Cors => CorsConfiguration.SectionKey;
 		public static string Smtp => SmtpEmailServicesOptions.SectionKey;
