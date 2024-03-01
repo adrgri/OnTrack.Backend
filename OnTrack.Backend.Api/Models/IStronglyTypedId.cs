@@ -3,4 +3,6 @@
 public interface IStronglyTypedId
 {
 	Guid Value { get; init; }
+
+	string ToString();
 }
