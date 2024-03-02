@@ -5,7 +5,7 @@ using OnTrack.Backend.Api.Models;
 namespace OnTrack.Backend.Api.Services;
 
 public sealed class EfProjectsAccessService<TDbContext>(TDbContext context)
-	: EfEntityAccessService<Project, ProjectId, TDbContext>(context)
+	: EfEntityAccessService<ProjectId, Project, TDbContext>(context)
 	where TDbContext : DbContext
 {
 	private void SetNestedAppUsersState(ICollection<AppUser> existingAppUsers, CancellationToken cancellationToken)

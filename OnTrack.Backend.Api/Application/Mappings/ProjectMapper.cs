@@ -6,7 +6,7 @@ using Riok.Mapperly.Abstractions;
 namespace OnTrack.Backend.Api.Application.Mappings;
 
 [Mapper]
-public sealed partial class ProjectMapper : StronglyTypedIdMapper<Project, ProjectId, ProjectDto>
+public sealed partial class ProjectMapper : StronglyTypedIdMapper<ProjectId, Project, ProjectDto>
 {
 	[UseMapper]
 	public static AppUserMapper AppUserMapper { get; } = new();

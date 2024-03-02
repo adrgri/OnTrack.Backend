@@ -6,7 +6,7 @@ using Riok.Mapperly.Abstractions;
 namespace OnTrack.Backend.Api.Application.Mappings;
 
 [Mapper]
-public sealed partial class StatusMapper : StronglyTypedIdMapper<Status, StatusId, StatusDto>
+public sealed partial class StatusMapper : StronglyTypedIdMapper<StatusId, Status, StatusDto>
 {
 	[MapperIgnoreTarget(nameof(Status.Id))]
 	public override partial void ToExistingDomainModel(StatusDto dto, Status entity);

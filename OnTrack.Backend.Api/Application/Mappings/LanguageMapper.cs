@@ -6,7 +6,7 @@ using Riok.Mapperly.Abstractions;
 namespace OnTrack.Backend.Api.Application.Mappings;
 
 [Mapper]
-public sealed partial class LanguageMapper : StronglyTypedIdMapper<Language, LanguageId, LanguageDto>
+public sealed partial class LanguageMapper : StronglyTypedIdMapper<LanguageId, Language, LanguageDto>
 {
 	[MapperIgnoreTarget(nameof(Language.Id))]
 	public override partial void ToExistingDomainModel(LanguageDto dto, Language entity);

@@ -6,7 +6,7 @@ using Riok.Mapperly.Abstractions;
 namespace OnTrack.Backend.Api.Application.Mappings;
 
 [Mapper]
-public sealed partial class IconMapper : StronglyTypedIdMapper<Icon, IconId, IconDto>
+public sealed partial class IconMapper : StronglyTypedIdMapper<IconId, Icon, IconDto>
 {
 	[MapperIgnoreTarget(nameof(Icon.Id))]
 	public override partial void ToExistingDomainModel(IconDto dto, Icon entity);

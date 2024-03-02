@@ -5,7 +5,7 @@ using OnTrack.Backend.Api.Models;
 namespace OnTrack.Backend.Api.Services;
 
 public sealed class EfMilestonesAccessService<TDbContext>(TDbContext context)
-	: EfEntityAccessService<Milestone, MilestoneId, TDbContext>(context)
+	: EfEntityAccessService<MilestoneId, Milestone, TDbContext>(context)
 	where TDbContext : DbContext
 {
 	private void SetNestedProjectState(Project existingProject, CancellationToken cancellationToken)

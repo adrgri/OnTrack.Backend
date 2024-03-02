@@ -6,10 +6,10 @@ namespace OnTrack.Backend.Api.Services;
 
 // TODO: Add remarks telling that this class relies on the DbContext to have appropriate DbSet<TEntity> properties, maybe add a sanity check in the app startup to check for those properties
 /*/ This class can not be abstract since DI container must be able to create instances of it (if you don't create concrete child classes for every Entity) /*/
-public class EfEntityAccessService<TEntity, TEntityId, TDbContext>(TDbContext context)
-	: IEntityAccessService<TEntity, TEntityId>
-	where TEntity : class, IEntity<TEntityId>
+public class EfEntityAccessService<TEntityId, TEntity, TDbContext>(TDbContext context)
+	: IEntityAccessService<TEntityId, TEntity>
 	where TEntityId : IStronglyTypedId
+	where TEntity : class, IEntity<TEntityId>
 	where TDbContext : DbContext
 {
 	protected TDbContext Context { get; } = context;

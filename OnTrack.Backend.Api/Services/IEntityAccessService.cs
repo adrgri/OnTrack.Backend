@@ -2,9 +2,9 @@
 
 namespace OnTrack.Backend.Api.Services;
 
-public interface IEntityAccessService<TEntity, in TEntityId>
-	where TEntity : IEntity<TEntityId>
+public interface IEntityAccessService<in TEntityId, TEntity>
 	where TEntityId : IStronglyTypedId
+	where TEntity : IEntity<TEntityId>
 {
 	// TODO: Add methods to get the outcome of the operation, success or failure with description. This can be a discriminated union
 	SysTask Add(TEntity entity, CancellationToken cancellationToken);

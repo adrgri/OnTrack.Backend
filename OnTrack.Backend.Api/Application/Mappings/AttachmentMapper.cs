@@ -5,7 +5,7 @@ using Riok.Mapperly.Abstractions;
 namespace OnTrack.Backend.Api.Application.Mappings;
 
 [Mapper]
-public sealed partial class AttachmentMapper : StronglyTypedIdMapper<Attachment, AttachmentId, AttachmentDto>
+public sealed partial class AttachmentMapper : StronglyTypedIdMapper<AttachmentId, Attachment, AttachmentDto>
 {
 	[MapperIgnoreTarget(nameof(Attachment.Id))]
 	public override partial void ToExistingDomainModel(AttachmentDto dto, Attachment entity);

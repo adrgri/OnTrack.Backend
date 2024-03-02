@@ -6,7 +6,7 @@ using Riok.Mapperly.Abstractions;
 namespace OnTrack.Backend.Api.Application.Mappings;
 
 [Mapper]
-public sealed partial class TaskMapper : StronglyTypedIdMapper<Task, TaskId, TaskDto>
+public sealed partial class TaskMapper : StronglyTypedIdMapper<TaskId, Task, TaskDto>
 {
 	[UseMapper]
 	public static MilestoneMapper MilestoneMapper { get; } = new();

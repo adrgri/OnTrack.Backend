@@ -3,9 +3,9 @@ using OnTrack.Backend.Api.Models;
 
 namespace OnTrack.Backend.Api.Application.Mappings;
 
-public interface IMapper<TEntity, TEntityId, TDto>
-	where TEntity : IEntity<TEntityId>
+public interface IMapper<TEntityId, TEntity, TDto>
 	where TEntityId : IStronglyTypedId
+	where TEntity : IEntity<TEntityId>
 	where TDto : IDto
 {
 	TEntity FromId(TEntityId id);

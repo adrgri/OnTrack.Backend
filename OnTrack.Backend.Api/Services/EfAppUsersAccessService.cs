@@ -5,7 +5,7 @@ using OnTrack.Backend.Api.Models;
 namespace OnTrack.Backend.Api.Services;
 
 public sealed class EfAppUsersAccessService<TDbContext>(TDbContext context)
-	: EfEntityAccessService<AppUser, IdentitySystemObjectId, TDbContext>(context)
+	: EfEntityAccessService<IdentitySystemObjectId, AppUser, TDbContext>(context)
 	where TDbContext : DbContext
 {
 	private const string _template = "Please use the identity API endpoints in order to {0} user.";

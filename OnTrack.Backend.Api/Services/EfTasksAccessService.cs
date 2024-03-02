@@ -5,7 +5,7 @@ using OnTrack.Backend.Api.Models;
 namespace OnTrack.Backend.Api.Services;
 
 public sealed class EfTasksAccessService<TDbContext>(TDbContext context)
-	: EfEntityAccessService<Task, TaskId, TDbContext>(context)
+	: EfEntityAccessService<TaskId, Task, TDbContext>(context)
 	where TDbContext : DbContext
 {
 	private void SetNestedMilestoneState(Milestone existingMilestone, CancellationToken cancellationToken)

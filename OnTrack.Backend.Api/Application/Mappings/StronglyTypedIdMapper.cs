@@ -3,9 +3,9 @@ using OnTrack.Backend.Api.Models;
 
 namespace OnTrack.Backend.Api.Application.Mappings;
 
-public abstract class StronglyTypedIdMapper<TEntity, TEntityId, TDto> : IMapper<TEntity, TEntityId, TDto>
-	where TEntity : IEntity<TEntityId>, new()
+public abstract class StronglyTypedIdMapper<TEntityId, TEntity, TDto> : IMapper<TEntityId, TEntity, TDto>
 	where TEntityId : IStronglyTypedId
+	where TEntity : IEntity<TEntityId>, new()
 	where TDto : IDto
 {
 	public TEntity FromId(TEntityId id)
