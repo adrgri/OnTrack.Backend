@@ -148,13 +148,13 @@ internal static class AppExtensions
 		}));
 	}
 
-	private static IEnumerable<Type> GetStronglyTypedIds()
+	private static IEnumerable<Type> GetAllStronglyTypedIds()
 	{
 		return Assembly.GetExecutingAssembly().GetTypes()
 			.Where(mytype => mytype.GetInterfaces().Contains(typeof(IStronglyTypedId)));
 	}
 
-	private static void MapAllStronglyTypedIds(SwaggerGenOptions options)
+	private static void MapAllStronglyTypedIdsAsUuids(SwaggerGenOptions options)
 	{
 		static OpenApiSchema CommonSchemaSetup() => new()
 		{
@@ -162,7 +162,7 @@ internal static class AppExtensions
 			Format = "uuid"
 		};
 
-		foreach (Type stronglyTypedId in GetStronglyTypedIds())
+		foreach (Type stronglyTypedId in GetAllStronglyTypedIds())
 		{
 			options.MapType(stronglyTypedId, CommonSchemaSetup);
 		}
@@ -174,13 +174,11 @@ internal static class AppExtensions
 		return typeof(AppExtensions).Assembly.GetTypes()
 			.Select(type => type.GetCustomAttribute<TAttribute>())
 			.Where(attribute => attribute is not null)!;
-		// Avoided unnecessary Cast<TAttribute>() by using null-forgiving operator since the collection will not contain any null elements
+		// Avoided unnecessary Cast<TAttribute>() by using null-forgiving operator since the collection will not contain any nulls
 	}
 
-	private static IEnumerable<Type> SearchAssemblyForJsonConverterAttributesAndExtractConverterTypes(ILogger<Program> logger)
+	private static Type ExtractJsonConverterType(JsonConverterAttribute jsonConverterAttribute, ILogger<Program> logger)
 	{
-		Type Converter(JsonConverterAttribute jsonConverterAttribute)
-		{
 			Type? converterType = jsonConverterAttribute.ConverterType;
 
 			if (converterType is null)
@@ -197,10 +195,7 @@ internal static class AppExtensions
 			return converterType;
 		}
 
-		return SearchAssemblyForJsonConverterAttributes<JsonConverterAttribute>().Select(Converter);
-	}
-
-	private static JsonConverter ActivateJsonConverter(Type jsonConverterType, ILogger<Program> logger)
+	private static JsonConverter InstantiateJsonConverter(Type jsonConverterType, ILogger<Program> logger)
 	{
 		try
 		{
@@ -222,10 +217,11 @@ internal static class AppExtensions
 
 	private static void AddStronglyTypedIdJsonConverters(JsonOptions options, ILogger<Program> logger)
 	{
-		IEnumerable<JsonConverter> activatedJsonConverters = SearchAssemblyForJsonConverterAttributesAndExtractConverterTypes(logger)
-			.Select(jsonConverterType => ActivateJsonConverter(jsonConverterType, logger));
+		IEnumerable<JsonConverter> jsonConverters = SearchAssemblyForJsonConverterAttributes<JsonConverterAttribute>()
+			.Select(jsonConverterAttribute => ExtractJsonConverterType(jsonConverterAttribute, logger))
+			.Select(jsonConverterType => InstantiateJsonConverter(jsonConverterType, logger));
 
-		foreach (JsonConverter jsonConverter in activatedJsonConverters)
+		foreach (JsonConverter jsonConverter in jsonConverters)
 		{
 			logger.LogInformation("Registering JsonConverter of type {JsonConverterType}.", jsonConverter.GetType());
 
