@@ -179,21 +179,21 @@ internal static class AppExtensions
 
 	private static Type ExtractJsonConverterType(JsonConverterAttribute jsonConverterAttribute, ILogger<Program> logger)
 	{
-			Type? converterType = jsonConverterAttribute.ConverterType;
+		Type? converterType = jsonConverterAttribute.ConverterType;
 
-			if (converterType is null)
-			{
-				logger.LogError(
-					new UnreachableException($"This should not happen since {nameof(JsonConverterAttribute)} enforces this property in the constructor."),
-					"{Property} property of the {Object} was null.",
-					nameof(JsonConverterAttribute.ConverterType),
-					nameof(JsonConverterAttribute));
+		if (converterType is null)
+		{
+			logger.LogError(
+				new UnreachableException($"This should not happen since {nameof(JsonConverterAttribute)} enforces this property in the constructor."),
+				"{Property} property of the {Object} was null.",
+				nameof(JsonConverterAttribute.ConverterType),
+				nameof(JsonConverterAttribute));
 
-				throw new InvalidOperationException($"{nameof(JsonConverterAttribute.ConverterType)} is not set properly.");
-			}
-
-			return converterType;
+			throw new InvalidOperationException($"{nameof(JsonConverterAttribute.ConverterType)} is not set properly.");
 		}
+
+		return converterType;
+	}
 
 	private static JsonConverter InstantiateJsonConverter(Type jsonConverterType, ILogger<Program> logger)
 	{
@@ -319,15 +319,15 @@ internal static class AppExtensions
 	{
 		ConfigurationWrapper(() =>
 		{
-			builder.Services.AddTransient<IEntityAccessService<AppUser, IdentitySystemObjectId>, EfAppUsersAccessService<AppDbContext>>();
-			builder.Services.AddTransient<IEntityAccessService<Attachment, AttachmentId>, EfEntityAccessService<Attachment, AttachmentId, AppDbContext>>();
-			builder.Services.AddTransient<IEntityAccessService<Icon, IconId>, EfEntityAccessService<Icon, IconId, AppDbContext>>();
-			builder.Services.AddTransient<IEntityAccessService<Language, LanguageId>, EfEntityAccessService<Language, LanguageId, AppDbContext>>();
-			builder.Services.AddTransient<IEntityAccessService<Milestone, MilestoneId>, EfMilestonesAccessService<AppDbContext>>();
-			builder.Services.AddTransient<IEntityAccessService<Project, ProjectId>, EfProjectsAccessService<AppDbContext>>();
-			builder.Services.AddTransient<IEntityAccessService<Resource, ResourceId>, EfEntityAccessService<Resource, ResourceId, AppDbContext>>();
-			builder.Services.AddTransient<IEntityAccessService<Status, StatusId>, EfEntityAccessService<Status, StatusId, AppDbContext>>();
-			builder.Services.AddTransient<IEntityAccessService<Task, TaskId>, EfTasksAccessService<AppDbContext>>();
+			builder.Services.AddTransient<IEntityAccessService<IdentitySystemObjectId, AppUser>, EfAppUsersAccessService<AppDbContext>>();
+			builder.Services.AddTransient<IEntityAccessService<AttachmentId, Attachment>, EfEntityAccessService<AttachmentId, Attachment, AppDbContext>>();
+			builder.Services.AddTransient<IEntityAccessService<IconId, Icon>, EfEntityAccessService<IconId, Icon, AppDbContext>>();
+			builder.Services.AddTransient<IEntityAccessService<LanguageId, Language>, EfEntityAccessService<LanguageId, Language, AppDbContext>>();
+			builder.Services.AddTransient<IEntityAccessService<MilestoneId, Milestone>, EfMilestonesAccessService<AppDbContext>>();
+			builder.Services.AddTransient<IEntityAccessService<ProjectId, Project>, EfProjectsAccessService<AppDbContext>>();
+			builder.Services.AddTransient<IEntityAccessService<ResourceId, Resource>, EfEntityAccessService<ResourceId, Resource, AppDbContext>>();
+			builder.Services.AddTransient<IEntityAccessService<StatusId, Status>, EfEntityAccessService<StatusId, Status, AppDbContext>>();
+			builder.Services.AddTransient<IEntityAccessService<TaskId, Task>, EfTasksAccessService<AppDbContext>>();
 		}, "Data access services", logger);
 	}
 
@@ -335,15 +335,15 @@ internal static class AppExtensions
 	{
 		ConfigurationWrapper(() =>
 		{
-			builder.Services.AddSingleton<IMapper<AppUser, IdentitySystemObjectId, AppUserDto>, AppUserMapper>();
-			builder.Services.AddSingleton<IMapper<Attachment, AttachmentId, AttachmentDto>, AttachmentMapper>();
-			builder.Services.AddSingleton<IMapper<Icon, IconId, IconDto>, IconMapper>();
-			builder.Services.AddSingleton<IMapper<Language, LanguageId, LanguageDto>, LanguageMapper>();
-			builder.Services.AddSingleton<IMapper<Milestone, MilestoneId, MilestoneDto>, MilestoneMapper>();
-			builder.Services.AddSingleton<IMapper<Project, ProjectId, ProjectDto>, ProjectMapper>();
-			builder.Services.AddSingleton<IMapper<Resource, ResourceId, ResourceDto>, ResourceMapper>();
-			builder.Services.AddSingleton<IMapper<Status, StatusId, StatusDto>, StatusMapper>();
-			builder.Services.AddSingleton<IMapper<Task, TaskId, TaskDto>, TaskMapper>();
+			builder.Services.AddSingleton<IMapper<IdentitySystemObjectId, AppUser, AppUserDto>, AppUserMapper>();
+			builder.Services.AddSingleton<IMapper<AttachmentId, Attachment, AttachmentDto>, AttachmentMapper>();
+			builder.Services.AddSingleton<IMapper<IconId, Icon, IconDto>, IconMapper>();
+			builder.Services.AddSingleton<IMapper<LanguageId, Language, LanguageDto>, LanguageMapper>();
+			builder.Services.AddSingleton<IMapper<MilestoneId, Milestone, MilestoneDto>, MilestoneMapper>();
+			builder.Services.AddSingleton<IMapper<ProjectId, Project, ProjectDto>, ProjectMapper>();
+			builder.Services.AddSingleton<IMapper<ResourceId, Resource, ResourceDto>, ResourceMapper>();
+			builder.Services.AddSingleton<IMapper<StatusId, Status, StatusDto>, StatusMapper>();
+			builder.Services.AddSingleton<IMapper<TaskId, Task, TaskDto>, TaskMapper>();
 		}, "Model mappers", logger);
 	}
 
