@@ -9,16 +9,16 @@ using OnTrack.Backend.Api.Services;
 namespace OnTrack.Backend.Api.Controllers;
 
 [ApiController, Route("/api/resource")]
-public sealed class ResourcesController(IEntityAccessService<Resource, ResourceId> resourcesService, ILogger<StatusesController> logger)
+public sealed class ResourcesController(IEntityAccessService<ResourceId, Resource> resourcesService, ILogger<StatusesController> logger)
 	: ControllerBase
 {
-	private readonly IEntityAccessService<Resource, ResourceId> _resourcesService = resourcesService;
+	private readonly IEntityAccessService<ResourceId, Resource> _resourcesService = resourcesService;
 	private readonly ILogger<StatusesController> _logger = logger;
 
 	[HttpPost]
 	[ProducesResponseType(StatusCodes.Status201Created)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
-	public async Task<ActionResult<Resource>> PostResource(ResourceDto createResourceDto, [FromServices] IMapper<Resource, ResourceId, ResourceDto> mapper)
+	public async Task<ActionResult<Resource>> PostResource(ResourceDto createResourceDto, [FromServices] IMapper<ResourceId, Resource, ResourceDto> mapper)
 	{
 		Resource resource = mapper.ToNewDomainModel(createResourceDto);
 
@@ -54,7 +54,7 @@ public sealed class ResourcesController(IEntityAccessService<Resource, ResourceI
 	[HttpPut]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
-	public async Task<IActionResult> PutResource(ResourceId resourceId, ResourceDto resourceDto, [FromServices] IMapper<Resource, ResourceId, ResourceDto> mapper)
+	public async Task<IActionResult> PutResource(ResourceId resourceId, ResourceDto resourceDto, [FromServices] IMapper<ResourceId, Resource, ResourceDto> mapper)
 	{
 		Resource? resource = await _resourcesService.Find(resourceId);
 

@@ -9,16 +9,16 @@ using OnTrack.Backend.Api.Services;
 namespace OnTrack.Backend.Api.Controllers;
 
 [ApiController, Route("/api/status")]
-public sealed class StatusesController(IEntityAccessService<Status, StatusId> statusesService, ILogger<StatusesController> logger)
+public sealed class StatusesController(IEntityAccessService<StatusId, Status> statusesService, ILogger<StatusesController> logger)
 	: ControllerBase
 {
-	private readonly IEntityAccessService<Status, StatusId> _statusesService = statusesService;
+	private readonly IEntityAccessService<StatusId, Status> _statusesService = statusesService;
 	private readonly ILogger<StatusesController> _logger = logger;
 
 	[HttpPost]
 	[ProducesResponseType(StatusCodes.Status201Created)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
-	public async Task<ActionResult<Status>> PostStatus(StatusDto statusDto, [FromServices] IMapper<Status, StatusId, StatusDto> mapper)
+	public async Task<ActionResult<Status>> PostStatus(StatusDto statusDto, [FromServices] IMapper<StatusId, Status, StatusDto> mapper)
 	{
 		Status status = mapper.ToNewDomainModel(statusDto);
 
@@ -54,7 +54,7 @@ public sealed class StatusesController(IEntityAccessService<Status, StatusId> st
 	[HttpPut("{statusId}")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound), ProducesResponseType(StatusCodes.Status409Conflict)]
-	public async Task<IActionResult> PutStatus(StatusId statusId, StatusDto statusDto, [FromServices] IMapper<Status, StatusId, StatusDto> mapper)
+	public async Task<IActionResult> PutStatus(StatusId statusId, StatusDto statusDto, [FromServices] IMapper<StatusId, Status, StatusDto> mapper)
 	{
 		Status? status = await _statusesService.Find(statusId);
 
