@@ -5,7 +5,7 @@ using OnTrack.Backend.Api.ComponentModel.DataAnnotations;
 
 namespace OnTrack.Backend.Api.Configuration;
 
-public class SmtpEmailServicesOptions : IOptionsSection
+public sealed class SmtpEmailServicesOptions : IOptionsSection
 {
 	public static string SectionKey => "Smtp";
 

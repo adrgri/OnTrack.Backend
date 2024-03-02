@@ -225,6 +225,29 @@ internal static class AppExtensions
 		}
 	}
 
+	private static ConnectionsConfiguration GetConnectionsConfiguration(WebApplicationBuilder builder, ILogger<Program> logger)
+	{
+		logger.LogInformation("Retrieving {ConfigurationName}...", "Connections configuration");
+
+		string connectionsConfigurationSectionKey = ConfigurationSectionKeys.ConnectionStrings;
+
+		IConfigurationSection connectionsConfigurationSection = builder.Configuration.GetRequiredSection(connectionsConfigurationSectionKey);
+
+		ConnectionsConfiguration? connectionsConfiguration = connectionsConfigurationSection.Get<ConnectionsConfiguration>();
+
+		if (connectionsConfiguration is null)
+		{
+			logger.LogError(
+				"Failed to bind configuration section {ConfigurationSectionKey} to {ConfigurationModelName} model. The result is null.",
+				connectionsConfigurationSectionKey,
+				nameof(ConnectionsConfiguration));
+
+			throw new InvalidOperationException("Connections configuration settings section is invalid.");
+		}
+
+		return connectionsConfiguration;
+	}
+
 	/// <summary>
 	/// Adds services to the container
 	/// </summary>
@@ -237,9 +260,9 @@ internal static class AppExtensions
 
 			builder.Services.AddDbContext<AppDbContext>(options =>
 			{
-				string sqlDefaultDatabaseConnectionString = string.Concat(ConfigurationSectionKeys.ConnectionStrings, ":", ConfigurationKeys.SqlDefaultDatabase);
+				ConnectionsConfiguration connectionsConfiguration = GetConnectionsConfiguration(builder, logger);
 
-				options.UseSqlServer(builder.Configuration.GetRequiredSection(sqlDefaultDatabaseConnectionString).Value);
+				options.UseSqlServer(connectionsConfiguration.SqlDatabase);
 
 				if (builder.Environment.IsProduction() == false)
 				{

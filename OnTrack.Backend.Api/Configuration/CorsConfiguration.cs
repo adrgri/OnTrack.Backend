@@ -1,6 +1,6 @@
 ﻿namespace OnTrack.Backend.Api.Configuration;
 
-public class CorsConfiguration : IOptionsSection
+public sealed class CorsConfiguration : IOptionsSection
 {
 	public static string SectionKey => "Cors";
 
