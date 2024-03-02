@@ -8,7 +8,7 @@ public abstract class StronglyTypedIdMapper<TEntityId, TEntity, TDto> : IMapper<
 	where TEntity : IEntity<TEntityId>, new()
 	where TDto : IDto
 {
-	public TEntity FromId(TEntityId id)
+	public virtual TEntity FromId(TEntityId id)
 	{
 		return new TEntity
 		{
@@ -20,7 +20,7 @@ public abstract class StronglyTypedIdMapper<TEntityId, TEntity, TDto> : IMapper<
 
 	public abstract void ToExistingDto(TEntity entity, TDto dto);
 
-	public TEntityId ToId(TEntity entity)
+	public virtual TEntityId ToId(TEntity entity)
 	{
 		return entity.Id;
 	}

@@ -4,7 +4,7 @@ using OnTrack.Backend.Api.Infrastructure.DataAccess;
 
 namespace OnTrack.Backend.Api.Models;
 
-// TODO: THis attribute should not be on the model level, since this will be domain thing, domain object can not have dependencies on the infrastructure, move it to the infrastructure project as a configuration class
+// TODO: This attribute should not be on the model level, since this will be domain thing, domain object can not have dependencies on the infrastructure, move it to the infrastructure project as a configuration class
 [EntityTypeConfiguration<StronglyTypedIdEntityConfiguration<MilestoneId, Milestone>, Milestone>]
 public sealed record class Milestone : IEntity<MilestoneId>
 {

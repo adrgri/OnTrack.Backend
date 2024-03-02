@@ -2,7 +2,7 @@
 
 namespace OnTrack.Backend.Api.ComponentModel.DataAnnotations;
 
-// I have not tested how this attribute will behave when applied to fields or parameters, so I removed those from the "validOn" attribute target types
+// TODO: I have not tested how this attribute will behave when applied to fields or parameters, so I removed those from the "validOn" attribute target types
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
 public class RequiredWhenAttribute<T>(Predicate<T> shouldValidate, string explanationWhenValidationFailed)
 	: ValidationAttribute(string.Format(_errorMessage, explanationWhenValidationFailed))

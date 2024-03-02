@@ -151,7 +151,7 @@ internal static class AppExtensions
 	private static IEnumerable<Type> GetAllStronglyTypedIds()
 	{
 		return Assembly.GetExecutingAssembly().GetTypes()
-			.Where(mytype => mytype.GetInterfaces().Contains(typeof(IStronglyTypedId)));
+			.Where(type => type.GetInterfaces().Contains(typeof(IStronglyTypedId)));
 	}
 
 	private static void MapAllStronglyTypedIdsAsUuids(SwaggerGenOptions options)

@@ -8,7 +8,7 @@ namespace OnTrack.Backend.Api.ComponentModel;
 public sealed class StronglyTypedIdTypeConverter<TStronglyTypedId> : TypeConverter
 	where TStronglyTypedId : IStronglyTypedId, new()
 {
-#pragma warning disable S2743 // Static fields should not be used in generic types -> I know that it is not shared and it is fine in this case
+#pragma warning disable S2743 // Static fields should not be used in generic types -> I know that this field is not shared among generic instances of this class, it's fine in this case
 	private static readonly Type[] _supportedConversionTypes =
 	[
 		typeof(string),
