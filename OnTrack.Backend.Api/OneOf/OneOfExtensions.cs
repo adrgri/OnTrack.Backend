@@ -1,11 +1,10 @@
 ﻿using OneOf;
-using OneOf.Types;
 
 namespace OnTrack.Backend.Api.OneOf;
 
 public static class OneOfExtensions
 {
-	public static void AssignIfSucceeded<T>(this OneOf<T, Error> validationResult, Action<T> assigning)
+	public static void AssignIfSucceeded<TResult, TError>(this OneOf<TResult, TError> validationResult, Action<TResult> assigning)
 	{
 		validationResult.Switch(
 			existingMilestone => assigning(existingMilestone),
