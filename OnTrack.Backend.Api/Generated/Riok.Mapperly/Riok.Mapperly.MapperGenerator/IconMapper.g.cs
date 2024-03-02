@@ -4,16 +4,19 @@ namespace OnTrack.Backend.Api.Application.Mappings
 {
     public sealed partial class IconMapper
     {
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
         public override partial void ToExistingDomainModel(global::OnTrack.Backend.Api.Dto.IconDto dto, global::OnTrack.Backend.Api.Models.Icon entity)
         {
             entity.Name = dto.Name;
         }
 
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
         public override partial void ToExistingDto(global::OnTrack.Backend.Api.Models.Icon entity, global::OnTrack.Backend.Api.Dto.IconDto dto)
         {
             dto.Name = entity.Name;
         }
 
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
         public override partial global::OnTrack.Backend.Api.Models.Icon ToNewDomainModel(global::OnTrack.Backend.Api.Dto.IconDto dto)
         {
             var target = new global::OnTrack.Backend.Api.Models.Icon();
@@ -21,6 +24,7 @@ namespace OnTrack.Backend.Api.Application.Mappings
             return target;
         }
 
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
         public override partial global::OnTrack.Backend.Api.Dto.IconDto ToNewDto(global::OnTrack.Backend.Api.Models.Icon entity)
         {
             var target = new global::OnTrack.Backend.Api.Dto.IconDto();

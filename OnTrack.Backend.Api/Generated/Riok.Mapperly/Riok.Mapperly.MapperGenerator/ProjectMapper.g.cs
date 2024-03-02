@@ -4,11 +4,12 @@ namespace OnTrack.Backend.Api.Application.Mappings
 {
     public sealed partial class ProjectMapper
     {
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
         public override partial void ToExistingDomainModel(global::OnTrack.Backend.Api.Dto.ProjectDto dto, global::OnTrack.Backend.Api.Models.Project entity)
         {
             if (dto.MilestoneIds != null)
             {
-                entity.Milestones = MapToICollection1(dto.MilestoneIds);
+                entity.Milestones = MapToList1(dto.MilestoneIds);
             }
             else
             {
@@ -16,14 +17,15 @@ namespace OnTrack.Backend.Api.Application.Mappings
             }
             entity.Title = dto.Title;
             entity.Description = dto.Description;
-            entity.Members = MapToICollection(dto.MemberIds);
+            entity.Members = MapToList(dto.MemberIds);
         }
 
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
         public override partial void ToExistingDto(global::OnTrack.Backend.Api.Models.Project entity, global::OnTrack.Backend.Api.Dto.ProjectDto dto)
         {
             if (entity.Milestones != null)
             {
-                dto.MilestoneIds = MapToICollection3(entity.Milestones);
+                dto.MilestoneIds = MapToList3(entity.Milestones);
             }
             else
             {
@@ -31,15 +33,16 @@ namespace OnTrack.Backend.Api.Application.Mappings
             }
             dto.Title = entity.Title;
             dto.Description = entity.Description;
-            dto.MemberIds = MapToICollection5(entity.Members);
+            dto.MemberIds = MapToList2(entity.Members);
         }
 
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
         public override partial global::OnTrack.Backend.Api.Models.Project ToNewDomainModel(global::OnTrack.Backend.Api.Dto.ProjectDto dto)
         {
             var target = new global::OnTrack.Backend.Api.Models.Project();
             if (dto.MilestoneIds != null)
             {
-                target.Milestones = MapToICollection1(dto.MilestoneIds);
+                target.Milestones = MapToList1(dto.MilestoneIds);
             }
             else
             {
@@ -47,16 +50,17 @@ namespace OnTrack.Backend.Api.Application.Mappings
             }
             target.Title = dto.Title;
             target.Description = dto.Description;
-            target.Members = MapToICollection4(dto.MemberIds);
+            target.Members = MapToList(dto.MemberIds);
             return target;
         }
 
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
         public override partial global::OnTrack.Backend.Api.Dto.ProjectDto ToNewDto(global::OnTrack.Backend.Api.Models.Project entity)
         {
             var target = new global::OnTrack.Backend.Api.Dto.ProjectDto();
             if (entity.Milestones != null)
             {
-                target.MilestoneIds = MapToICollection3(entity.Milestones);
+                target.MilestoneIds = MapToList3(entity.Milestones);
             }
             else
             {
@@ -64,11 +68,12 @@ namespace OnTrack.Backend.Api.Application.Mappings
             }
             target.Title = entity.Title;
             target.Description = entity.Description;
-            target.MemberIds = MapToICollection2(entity.Members);
+            target.MemberIds = MapToList2(entity.Members);
             return target;
         }
 
-        private global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.AppUser> MapToICollection(global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.IdentitySystemObjectId> source)
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
+        private global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.AppUser> MapToList(global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.IdentitySystemObjectId> source)
         {
             var target = new global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.AppUser>(source.Count);
             foreach (var item in source)
@@ -78,7 +83,8 @@ namespace OnTrack.Backend.Api.Application.Mappings
             return target;
         }
 
-        private global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.Milestone> MapToICollection1(global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.MilestoneId> source)
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
+        private global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.Milestone> MapToList1(global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.MilestoneId> source)
         {
             var target = new global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.Milestone>(source.Count);
             foreach (var item in source)
@@ -88,7 +94,8 @@ namespace OnTrack.Backend.Api.Application.Mappings
             return target;
         }
 
-        private global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.IdentitySystemObjectId> MapToICollection2(global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.AppUser> source)
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
+        private global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.IdentitySystemObjectId> MapToList2(global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.AppUser> source)
         {
             var target = new global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.IdentitySystemObjectId>(source.Count);
             foreach (var item in source)
@@ -98,32 +105,13 @@ namespace OnTrack.Backend.Api.Application.Mappings
             return target;
         }
 
-        private global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.MilestoneId> MapToICollection3(global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.Milestone> source)
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
+        private global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.MilestoneId> MapToList3(global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.Milestone> source)
         {
             var target = new global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.MilestoneId>(source.Count);
             foreach (var item in source)
             {
                 target.Add(MilestoneMapper.ToId(item));
-            }
-            return target;
-        }
-
-        private global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.AppUser> MapToICollection4(global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.IdentitySystemObjectId> source)
-        {
-            var target = new global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.AppUser>(source.Count);
-            foreach (var item in source)
-            {
-                target.Add(AppUserMapper.FromId(item));
-            }
-            return target;
-        }
-
-        private global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.IdentitySystemObjectId> MapToICollection5(global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.AppUser> source)
-        {
-            var target = new global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.IdentitySystemObjectId>(source.Count);
-            foreach (var item in source)
-            {
-                target.Add(AppUserMapper.ToId(item));
             }
             return target;
         }

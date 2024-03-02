@@ -4,18 +4,21 @@ namespace OnTrack.Backend.Api.Application.Mappings
 {
     public sealed partial class StatusMapper
     {
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
         public override partial void ToExistingDomainModel(global::OnTrack.Backend.Api.Dto.StatusDto dto, global::OnTrack.Backend.Api.Models.Status entity)
         {
             entity.Name = dto.Name;
             entity.Order = dto.Order;
         }
 
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
         public override partial void ToExistingDto(global::OnTrack.Backend.Api.Models.Status entity, global::OnTrack.Backend.Api.Dto.StatusDto dto)
         {
             dto.Name = entity.Name;
             dto.Order = entity.Order;
         }
 
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
         public override partial global::OnTrack.Backend.Api.Models.Status ToNewDomainModel(global::OnTrack.Backend.Api.Dto.StatusDto dto)
         {
             var target = new global::OnTrack.Backend.Api.Models.Status();
@@ -24,6 +27,7 @@ namespace OnTrack.Backend.Api.Application.Mappings
             return target;
         }
 
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
         public override partial global::OnTrack.Backend.Api.Dto.StatusDto ToNewDto(global::OnTrack.Backend.Api.Models.Status entity)
         {
             var target = new global::OnTrack.Backend.Api.Dto.StatusDto();
