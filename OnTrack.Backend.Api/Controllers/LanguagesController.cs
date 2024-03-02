@@ -1,116 +1,113 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+
+using OneOf;
+using OneOf.Types;
 
 using OnTrack.Backend.Api.Application.Mappings;
+using OnTrack.Backend.Api.DataAccess;
 using OnTrack.Backend.Api.Dto;
 using OnTrack.Backend.Api.Models;
 using OnTrack.Backend.Api.Services;
+using OnTrack.Backend.Api.Threading;
+using OnTrack.Backend.Api.Validation;
 
 namespace OnTrack.Backend.Api.Controllers;
 
 [ApiController, Route("/api/language")]
-public sealed class LanguagesController(IEntityAccessService<Language, LanguageId> languagesService, ILogger<StatusesController> logger)
-	: ControllerBase
+public sealed class LanguagesController(
+	ILogger<LanguagesController> logger,
+	IEntityAccessService<LanguageId, Language> languagesAccessService,
+	IMapper<LanguageId, Language, LanguageDto> mapper,
+	IAsyncCollectionValidator<LanguageId, OneOf<Language, EntityIdErrorsDescription<LanguageId>>> languageCollectionValidator)
+	: GenericController<LanguageId, Language, LanguageDto, LanguagesController>(logger, languagesAccessService, mapper, languageCollectionValidator)
 {
-	private readonly IEntityAccessService<Language, LanguageId> _languagesService = languagesService;
-	private readonly ILogger<StatusesController> _logger = logger;
+	protected override Task<OneOf<Language, ValidationFailure>> ConvertToNewDomainModel(LanguageDto entityDto)
+	{
+		OneOf<Language, ValidationFailure> output = ModelState.IsValid switch
+		{
+			true => Mapper.ToNewDomainModel(entityDto),
+			false => new ValidationFailure()
+		};
+
+		return SysTask.FromResult(output);
+	}
+
+	protected override async Task<OneOf<Language, NotFound, ValidationFailure>> ConvertToNewDomainModel(LanguageId entityId, LanguageDto entityDto)
+	{
+		return (await ValidateEntityExistence(entityId, EntityCollectionValidator)).Match<OneOf<Language, NotFound, ValidationFailure>>(language =>
+		{
+			Mapper.ToExistingDomainModel(entityDto, language);
+
+			return ModelState.IsValid ? language : new ValidationFailure();
+		},
+		(NotFound notFound) => notFound);
+	}
 
 	[HttpPost]
 	[ProducesResponseType(StatusCodes.Status201Created)]
-	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status400BadRequest)]
-	public async Task<ActionResult<Language>> PostLanguage(LanguageDto createLanguageDto, [FromServices] IMapper<Language, LanguageId, LanguageDto> mapper)
+	[ProducesResponseType(StatusCodes.Status400BadRequest)]
+	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<ActionResult<LanguageDtoWithId>> PostLanguage(LanguageDto languageDto, CancellationToken cancellationToken)
 	{
-		Language language = mapper.ToNewDomainModel(createLanguageDto);
-
-		await _languagesService.Add(language);
-		await _languagesService.SaveChanges();
-
-		return CreatedAtAction(nameof(GetLanguage), new { languageId = language.Id }, language);
+		return (await Post(languageDto, cancellationToken)).Match<ActionResult<LanguageDtoWithId>>(
+			(Language language) => CreatedAtAction(nameof(GetLanguage), new { languageId = language.Id }, language),
+			(ValidationFailure _) => ValidationProblem(ModelState),
+			(Conflict _) => Conflict(),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 
 	[HttpGet("{languageId}")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
-	public async Task<ActionResult<Language>> GetLanguage(LanguageId languageId)
+	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<ActionResult<LanguageDtoWithId>> GetLanguage(LanguageId languageId, CancellationToken cancellationToken)
 	{
-		Language? language = await _languagesService.Find(languageId);
-
-		return language switch
-		{
-			null => NotFound(),
-			_ => language
-		};
+		return (await Get(languageId, cancellationToken)).Match<ActionResult<LanguageDtoWithId>>(
+			(Language language) => new LanguageDtoWithId(language, Mapper),
+			(NotFound _) => NotFound(),
+			(Conflict _) => Conflict(),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 
 	[HttpGet]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	public async Task<ActionResult<IEnumerable<Language>>> GetLanguages()
+	[ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<ActionResult<IEnumerable<LanguageDtoWithId>>> GetLanguages(CancellationToken cancellationToken)
 	{
-		IEnumerable<Language> languages = await _languagesService.GetAll();
-
-		return languages.ToList();
+		return (await GetAll(cancellationToken)).Match<ActionResult<IEnumerable<LanguageDtoWithId>>>(
+			(List<Language> languagesList) => languagesList.ConvertAll(language => new LanguageDtoWithId(language, Mapper)),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 
 	[HttpPut]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound), ProducesResponseType(StatusCodes.Status409Conflict)]
-	public async Task<IActionResult> PutLanguage(LanguageId languageId, LanguageDto languageDto, [FromServices] IMapper<Language, LanguageId, LanguageDto> mapper)
+	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
+	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<IActionResult> PutLanguage(LanguageDtoWithId languageDtoWithId, CancellationToken cancellationToken)
 	{
-		Language? language = await _languagesService.Find(languageId);
-
-		if (language is null)
-		{
-			return NotFound();
-		}
-
-		mapper.ToExistingDomainModel(languageDto, language);
-
-		await _languagesService.Update(language);
-
-		try
-		{
-			await _languagesService.SaveChanges();
-
-			return Ok();
-		}
-		catch (DbUpdateConcurrencyException ex)
-		{
-			_logger.LogError(ex, _concurrencyErrorMessageTemplate, "Update", languageId);
-
-			return Conflict();
-		}
+		return (await Put(languageDtoWithId.Id, languageDtoWithId, cancellationToken)).Match(
+			(Language _) => Ok(),
+			(NotFound _) => NotFound(),
+			(ValidationFailure _) => ValidationProblem(ModelState),
+			(Conflict _) => Conflict(),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
-
-	private const string _concurrencyErrorMessageTemplate = "Concurrency exception occurred while trying to {Action} the language with id {LanguageId}.";
 
 	[HttpDelete("{languageId}")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound), ProducesResponseType(StatusCodes.Status409Conflict)]
-	public async Task<IActionResult> DeleteLanguage(LanguageId languageId)
+	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
+	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<IActionResult> DeleteLanguage(LanguageId languageId, CancellationToken cancellationToken)
 	{
-		Language? language = await _languagesService.Find(languageId);
-
-		if (language is null)
-		{
-			return NotFound();
-		}
-
-		await _languagesService.Remove(language);
-
-		try
-		{
-			await _languagesService.SaveChanges();
-			return Ok();
-		}
-		catch (DbUpdateConcurrencyException ex)
-		{
-			_logger.LogError(ex, _concurrencyErrorMessageTemplate, "delete", languageId);
-			return Conflict();
-		}
-		catch (Exception ex)
-		{
-			_logger.LogError(ex, "Unexpected exception occurred in {ActionName} endpoint.", nameof(DeleteLanguage));
-			throw;
-		}
+		return (await Delete(languageId, cancellationToken)).Match(
+			(Success _) => Ok(),
+			(NotFound _) => NotFound(),
+			(Conflict _) => Conflict(),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 }

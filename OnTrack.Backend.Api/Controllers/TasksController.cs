@@ -1,14 +1,15 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 using OneOf;
 using OneOf.Types;
 
 using OnTrack.Backend.Api.Application.Mappings;
+using OnTrack.Backend.Api.DataAccess;
 using OnTrack.Backend.Api.Dto;
 using OnTrack.Backend.Api.Models;
 using OnTrack.Backend.Api.OneOf;
 using OnTrack.Backend.Api.Services;
+using OnTrack.Backend.Api.Threading;
 using OnTrack.Backend.Api.Validation;
 
 namespace OnTrack.Backend.Api.Controllers;
@@ -16,166 +17,140 @@ namespace OnTrack.Backend.Api.Controllers;
 [ApiController, Route("/api/task")]
 public sealed class TasksController(
 	ILogger<TasksController> logger,
-	IEntityAccessService<Task, TaskId> tasksService,
-	IAsyncCollectionValidator<TaskId, OneOf<Task, EntityIdErrorsDescription<TaskId>>> tasksExistanceValidator,
-	IAsyncCollectionValidator<MilestoneId, OneOf<Milestone, EntityIdErrorsDescription<MilestoneId>>> milestoneExistanceValidator,
-	IAsyncCollectionValidator<IconId, OneOf<Icon, EntityIdErrorsDescription<IconId>>> iconsExistanceValidator,
-	IAsyncCollectionValidator<ResourceId, OneOf<Resource, EntityIdErrorsDescription<ResourceId>>> resourcesExistanceValidator,
-	IAsyncCollectionValidator<AttachmentId, OneOf<Attachment, EntityIdErrorsDescription<AttachmentId>>> attachmentsExistanceValidator)
-	: GenericController<Task, TaskId, TaskDto, TasksController>(logger, tasksService)
+	IEntityAccessService<TaskId, Task> tasksAccessService,
+	IMapper<TaskId, Task, TaskDto> mapper,
+	IAsyncCollectionValidator<TaskId, OneOf<Task, EntityIdErrorsDescription<TaskId>>> tasksCollectionValidator,
+	IAsyncCollectionValidator<MilestoneId, OneOf<Milestone, EntityIdErrorsDescription<MilestoneId>>> milestoneExistenceValidator,
+	IAsyncCollectionValidator<IconId, OneOf<Icon, EntityIdErrorsDescription<IconId>>> iconsExistenceValidator,
+	IAsyncCollectionValidator<ResourceId, OneOf<Resource, EntityIdErrorsDescription<ResourceId>>> resourcesExistenceValidator,
+	IAsyncCollectionValidator<AttachmentId, OneOf<Attachment, EntityIdErrorsDescription<AttachmentId>>> attachmentsExistenceValidator)
+	: GenericController<TaskId, Task, TaskDto, TasksController>(logger, tasksAccessService, mapper, tasksCollectionValidator)
 {
-	private readonly IAsyncCollectionValidator<TaskId, OneOf<Task, EntityIdErrorsDescription<TaskId>>> _tasksExistanceValidator = tasksExistanceValidator;
-	private readonly IAsyncCollectionValidator<MilestoneId, OneOf<Milestone, EntityIdErrorsDescription<MilestoneId>>> _milestoneExistanceValidator = milestoneExistanceValidator;
-	private readonly IAsyncCollectionValidator<IconId, OneOf<Icon, EntityIdErrorsDescription<IconId>>> _iconsExistanceValidator = iconsExistanceValidator;
-	private readonly IAsyncCollectionValidator<ResourceId, OneOf<Resource, EntityIdErrorsDescription<ResourceId>>> _resourcesExistanceValidator = resourcesExistanceValidator;
-	private readonly IAsyncCollectionValidator<AttachmentId, OneOf<Attachment, EntityIdErrorsDescription<AttachmentId>>> _attachmentsExistanceValidator = attachmentsExistanceValidator;
+	private readonly IAsyncCollectionValidator<MilestoneId, OneOf<Milestone, EntityIdErrorsDescription<MilestoneId>>> _milestoneExistenceValidator = milestoneExistenceValidator;
+	private readonly IAsyncCollectionValidator<IconId, OneOf<Icon, EntityIdErrorsDescription<IconId>>> _iconsExistenceValidator = iconsExistenceValidator;
+	private readonly IAsyncCollectionValidator<ResourceId, OneOf<Resource, EntityIdErrorsDescription<ResourceId>>> _resourcesExistenceValidator = resourcesExistenceValidator;
+	private readonly IAsyncCollectionValidator<AttachmentId, OneOf<Attachment, EntityIdErrorsDescription<AttachmentId>>> _attachmentsExistenceValidator = attachmentsExistenceValidator;
 
-	private async SysTask ValidateNestedEntitesExistance(Task task, TaskDto taskDto)
+	private async SysTask ValidateNestedEntitiesExistence(Task task, TaskDto taskDto)
 	{
 		task.AssignedResources = [];
 		task.Attachments = [];
 		task.Subtasks = [];
 
-		OneOf<Milestone, Error> milestoneValidationResult = await ValidateEntityExistance(taskDto.MilestoneId, _milestoneExistanceValidator);
+		OneOf<Milestone, NotFound> milestoneValidationResult = await ValidateEntityExistence(taskDto.MilestoneId, _milestoneExistenceValidator);
 
 		milestoneValidationResult.AssignIfSucceeded(existingMilestone => task.Milestone = existingMilestone);
 
 		if (taskDto.IconId is not null)
 		{
-			OneOf<Icon, Error> iconValidationResult = await ValidateEntityExistance(taskDto.IconId, _iconsExistanceValidator);
+			OneOf<Icon, NotFound> iconValidationResult = await ValidateEntityExistence(taskDto.IconId, _iconsExistenceValidator);
 
 			iconValidationResult.AssignIfSucceeded(existingIcon => task.Icon = existingIcon);
 		}
 
 		if (taskDto.AssignedResourceIds is not null)
 		{
-			await ValidateEntitiesExistance(taskDto.AssignedResourceIds, task.AssignedResources, _resourcesExistanceValidator);
+			await ValidateEntitiesExistence(taskDto.AssignedResourceIds, task.AssignedResources, _resourcesExistenceValidator);
 		}
 
 		if (taskDto.AttachmentIds is not null)
 		{
-			await ValidateEntitiesExistance(taskDto.AttachmentIds, task.Attachments, _attachmentsExistanceValidator);
+			await ValidateEntitiesExistence(taskDto.AttachmentIds, task.Attachments, _attachmentsExistenceValidator);
 		}
 
 		if (taskDto.SubtaskIds is not null)
 		{
-			await ValidateEntitiesExistance(taskDto.SubtaskIds, task.Subtasks, _tasksExistanceValidator);
+			await ValidateEntitiesExistence(taskDto.SubtaskIds, task.Subtasks, EntityCollectionValidator);
 		}
 	}
 
-	private async Task<ActionResult<Task>> AddTask(Task task)
+	protected override async Task<OneOf<Task, ValidationFailure>> ConvertToNewDomainModel(TaskDto entityDto)
 	{
-		await EntityAccessService.Add(task);
-		await EntityAccessService.SaveChanges();
+		Task task = Mapper.ToNewDomainModel(entityDto);
 
-		return CreatedAtAction(nameof(GetTask), new { taskId = task.Id }, task);
+		await ValidateNestedEntitiesExistence(task, entityDto);
+
+		return ModelState.IsValid ? task : new ValidationFailure();
+	}
+
+	protected override async Task<OneOf<Task, NotFound, ValidationFailure>> ConvertToNewDomainModel(TaskId entityId, TaskDto entityDto)
+	{
+		return await (await ValidateEntityExistence(entityId, EntityCollectionValidator)).Match(async task =>
+		{
+			Mapper.ToExistingDomainModel(entityDto, task);
+
+			await ValidateNestedEntitiesExistence(task, entityDto);
+
+			return ModelState.IsValid ? task : new ValidationFailure();
+		},
+		(NotFound notFound) => SysTask.FromResult<OneOf<Task, NotFound, ValidationFailure>>(notFound));
 	}
 
 	[HttpPost]
 	[ProducesResponseType(StatusCodes.Status201Created)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
-	public async Task<ActionResult<Task>> PostTask(TaskDto taskDto, [FromServices] IMapper<Task, TaskId, TaskDto> mapper)
+	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<ActionResult<TaskDtoWithId>> PostTask(TaskDto taskDto, CancellationToken cancellationToken)
 	{
-		Task task = mapper.ToNewDomainModel(taskDto);
-
-		await ValidateNestedEntitesExistance(task, taskDto);
-
-		return ModelState.IsValid ? await AddTask(task) : ValidationProblem(ModelState);
+		return (await Post(taskDto, cancellationToken)).Match<ActionResult<TaskDtoWithId>>(
+			(Task task) => CreatedAtAction(nameof(GetTask), new { taskId = task.Id }, task),
+			(ValidationFailure _) => ValidationProblem(ModelState),
+			(Conflict _) => Conflict(),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 
 	[HttpGet("{taskId}")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
-	public async Task<ActionResult<Task>> GetTask(TaskId taskId)
+	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<ActionResult<TaskDtoWithId>> GetTask(TaskId taskId, CancellationToken cancellationToken)
 	{
-		Task? task = await EntityAccessService.Find(taskId);
-
-		return task switch
-		{
-			null => NotFound(),
-			_ => task
-		};
+		return (await Get(taskId, cancellationToken)).Match<ActionResult<TaskDtoWithId>>(
+			(Task task) => new TaskDtoWithId(task, Mapper),
+			(NotFound _) => NotFound(),
+			(Conflict _) => Conflict(),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 
 	[HttpGet]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	public async Task<ActionResult<IEnumerable<Task>>> GetTasks()
+	[ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<ActionResult<IEnumerable<TaskDtoWithId>>> GetTasks(CancellationToken cancellationToken)
 	{
-		IEnumerable<Task> tasks = await EntityAccessService.GetAll();
-
-		return tasks.ToList();
-	}
-
-	private async Task<ActionResult> UpdateTask(Task task)
-	{
-		await EntityAccessService.Update(task);
-
-		try
-		{
-			await EntityAccessService.SaveChanges();
-		}
-		catch (DbUpdateConcurrencyException ex)
-		{
-			Logger.LogError(ex, "Concurrency exception occurred while trying to delete the task with id {TaskId}.", task.Id);
-
-			return Conflict();
-		}
-
-		return Ok();
-	}
-
-	private async Task<ActionResult> PutExistingTask(Task existingTask, TaskDto taskDto, [FromServices] IMapper<Task, TaskId, TaskDto> mapper)
-	{
-		mapper.ToExistingDomainModel(taskDto, existingTask);
-
-		await ValidateNestedEntitesExistance(existingTask, taskDto);
-
-		return ModelState.IsValid ? await UpdateTask(existingTask) : ValidationProblem(ModelState);
+		return (await GetAll(cancellationToken)).Match<ActionResult<IEnumerable<TaskDtoWithId>>>(
+			(List<Task> tasksList) => tasksList.ConvertAll(task => new TaskDtoWithId(task, Mapper)),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 
 	[HttpPut]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
-	public async Task<IActionResult> PutTask(TaskId taskId, TaskDto taskDto, [FromServices] IMapper<Task, TaskId, TaskDto> mapper)
+	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<IActionResult> PutTask(TaskDtoWithId taskDtoWithId, CancellationToken cancellationToken)
 	{
-		OneOf<Task, Error> validationResult = await ValidateEntityExistance(taskId, _tasksExistanceValidator);
-
-		return await validationResult.Match(
-			task => PutExistingTask(task, taskDto, mapper),
-			_ => SysTask.FromResult(ValidationProblem(ModelState)));
+		return (await Put(taskDtoWithId.Id, taskDtoWithId, cancellationToken)).Match(
+			(Task _)=> Ok(),
+			(NotFound _) => NotFound(),
+			(ValidationFailure _) => ValidationProblem(ModelState),
+			(Conflict _) => Conflict(),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 
 	[HttpDelete("{taskId}")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound), ProducesResponseType(StatusCodes.Status409Conflict)]
-	public async Task<IActionResult> DeleteTask(TaskId taskId)
+	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
+	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<IActionResult> DeleteTask(TaskId taskId, CancellationToken cancellationToken)
 	{
-		Task? task = await EntityAccessService.Find(taskId);
-
-		if (task is null)
-		{
-			return NotFound();
-		}
-
-		await EntityAccessService.Remove(task);
-
-		try
-		{
-			await EntityAccessService.SaveChanges();
-
-			return Ok();
-		}
-		catch (DbUpdateConcurrencyException ex)
-		{
-			Logger.LogError(ex, "Concurrency exception occurred while trying to delete the task with id {TaskId}.", taskId);
-
-			return Conflict();
-		}
-		catch (Exception ex)
-		{
-			Logger.LogError(ex, "Unexpected exception occurred in {ActionName} endpoint.", nameof(DeleteTask));
-
-			throw;
-		}
+		return (await Delete(taskId, cancellationToken)).Match(
+			(Success _) => Ok(),
+			(NotFound _) => NotFound(),
+			(Conflict _) => Conflict(),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 }

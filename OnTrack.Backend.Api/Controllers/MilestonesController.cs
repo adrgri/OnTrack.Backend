@@ -1,14 +1,15 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 using OneOf;
 using OneOf.Types;
 
 using OnTrack.Backend.Api.Application.Mappings;
+using OnTrack.Backend.Api.DataAccess;
 using OnTrack.Backend.Api.Dto;
 using OnTrack.Backend.Api.Models;
 using OnTrack.Backend.Api.OneOf;
 using OnTrack.Backend.Api.Services;
+using OnTrack.Backend.Api.Threading;
 using OnTrack.Backend.Api.Validation;
 
 namespace OnTrack.Backend.Api.Controllers;
@@ -16,155 +17,127 @@ namespace OnTrack.Backend.Api.Controllers;
 [ApiController, Route("/api/milestone")]
 public sealed class MilestonesController(
 	ILogger<MilestonesController> logger,
-	IEntityAccessService<Milestone, MilestoneId> milestonesService,
-	IAsyncCollectionValidator<MilestoneId, OneOf<Milestone, EntityIdErrorsDescription<MilestoneId>>> milestonesExistanceValidator,
-	IAsyncCollectionValidator<ProjectId, OneOf<Project, EntityIdErrorsDescription<ProjectId>>> projectsExistanceValidator,
-	IAsyncCollectionValidator<StatusId, OneOf<Status, EntityIdErrorsDescription<StatusId>>> statusesExistanceValidator,
-	IAsyncCollectionValidator<TaskId, OneOf<Task, EntityIdErrorsDescription<TaskId>>> tasksExistanceValidator)
-	: GenericController<Milestone, MilestoneId, MilestoneDto, MilestonesController>(logger, milestonesService)
+	IEntityAccessService<MilestoneId, Milestone> milestonesAccessService,
+	IMapper<MilestoneId, Milestone, MilestoneDto> mapper,
+	IAsyncCollectionValidator<MilestoneId, OneOf<Milestone, EntityIdErrorsDescription<MilestoneId>>> milestonesExistenceValidator,
+	IAsyncCollectionValidator<ProjectId, OneOf<Project, EntityIdErrorsDescription<ProjectId>>> projectsExistenceValidator,
+	IAsyncCollectionValidator<StatusId, OneOf<Status, EntityIdErrorsDescription<StatusId>>> statusesExistenceValidator,
+	IAsyncCollectionValidator<TaskId, OneOf<Task, EntityIdErrorsDescription<TaskId>>> tasksExistenceValidator)
+	: GenericController<MilestoneId, Milestone, MilestoneDto, MilestonesController>(logger, milestonesAccessService, mapper, milestonesExistenceValidator)
 {
-	private readonly IAsyncCollectionValidator<MilestoneId, OneOf<Milestone, EntityIdErrorsDescription<MilestoneId>>> _milestonesExistanceValidator = milestonesExistanceValidator;
-	private readonly IAsyncCollectionValidator<ProjectId, OneOf<Project, EntityIdErrorsDescription<ProjectId>>> _projectsExistanceValidator = projectsExistanceValidator;
-	private readonly IAsyncCollectionValidator<StatusId, OneOf<Status, EntityIdErrorsDescription<StatusId>>> _statusesExistanceValidator = statusesExistanceValidator;
-	private readonly IAsyncCollectionValidator<TaskId, OneOf<Task, EntityIdErrorsDescription<TaskId>>> _tasksExistanceValidator = tasksExistanceValidator;
+	private readonly IAsyncCollectionValidator<ProjectId, OneOf<Project, EntityIdErrorsDescription<ProjectId>>> _projectsExistenceValidator = projectsExistenceValidator;
+	private readonly IAsyncCollectionValidator<StatusId, OneOf<Status, EntityIdErrorsDescription<StatusId>>> _statusesExistenceValidator = statusesExistenceValidator;
+	private readonly IAsyncCollectionValidator<TaskId, OneOf<Task, EntityIdErrorsDescription<TaskId>>> _tasksExistenceValidator = tasksExistenceValidator;
 
-	private async SysTask ValidateNestedEntitesExistance(Milestone milestone, MilestoneDto milestoneDto)
+	private async SysTask ValidateNestedEntitiesExistence(Milestone milestone, MilestoneDto milestoneDto)
 	{
 		milestone.Status = null;
 		milestone.Tasks = [];
 
-		OneOf<Project, Error> projectValidationResult = await ValidateEntityExistance(milestoneDto.ProjectId, _projectsExistanceValidator);
+		OneOf<Project, NotFound> projectValidationResult = await ValidateEntityExistence(milestoneDto.ProjectId, _projectsExistenceValidator);
 
 		projectValidationResult.AssignIfSucceeded(existingProject => milestone.Project = existingProject);
 
 		if (milestoneDto.StatusId is not null)
 		{
-			OneOf<Status, Error> statusValidationResult = await ValidateEntityExistance(milestoneDto.StatusId, _statusesExistanceValidator);
+			OneOf<Status, NotFound> statusValidationResult = await ValidateEntityExistence(milestoneDto.StatusId, _statusesExistenceValidator);
 
 			statusValidationResult.AssignIfSucceeded(existingStatus => milestone.Status = existingStatus);
 		}
 
 		if (milestoneDto.TaskIds is not null)
 		{
-			await ValidateEntitiesExistance(milestoneDto.TaskIds, milestone.Tasks, _tasksExistanceValidator);
+			await ValidateEntitiesExistence(milestoneDto.TaskIds, milestone.Tasks, _tasksExistenceValidator);
 		}
 	}
 
-	private async Task<ActionResult<Milestone>> AddMilestone(Milestone milestone)
+	protected override async Task<OneOf<Milestone, ValidationFailure>> ConvertToNewDomainModel(MilestoneDto entityDto)
 	{
-		await EntityAccessService.Add(milestone);
-		await EntityAccessService.SaveChanges();
+		Milestone milestone = Mapper.ToNewDomainModel(entityDto);
 
-		return CreatedAtAction(nameof(GetMilestone), new { milestoneId = milestone.Id }, milestone);
+		await ValidateNestedEntitiesExistence(milestone, entityDto);
+
+		return ModelState.IsValid ? milestone : new ValidationFailure();
+	}
+
+	protected override async Task<OneOf<Milestone, NotFound, ValidationFailure>> ConvertToNewDomainModel(MilestoneId entityId, MilestoneDto entityDto)
+	{
+		return await (await ValidateEntityExistence(entityId, EntityCollectionValidator)).Match(async milestone =>
+		{
+			Mapper.ToExistingDomainModel(entityDto, milestone);
+
+			await ValidateNestedEntitiesExistence(milestone, entityDto);
+
+			return ModelState.IsValid ? milestone : new ValidationFailure();
+		},
+		(NotFound notFound) => SysTask.FromResult<OneOf<Milestone, NotFound, ValidationFailure>>(notFound));
 	}
 
 	[HttpPost]
 	[ProducesResponseType(StatusCodes.Status201Created)]
-	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status400BadRequest)]
-	public async Task<ActionResult<Milestone>> PostMilestone(MilestoneDto milestoneDto, [FromServices] IMapper<Milestone, MilestoneId, MilestoneDto> mapper)
+	[ProducesResponseType(StatusCodes.Status400BadRequest)]
+	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<ActionResult<MilestoneDtoWithId>> PostMilestone(MilestoneDto milestoneDto, CancellationToken cancellationToken)
 	{
-		Milestone milestone = mapper.ToNewDomainModel(milestoneDto);
-
-		await ValidateNestedEntitesExistance(milestone, milestoneDto);
-
-		return ModelState.IsValid ? await AddMilestone(milestone) : ValidationProblem(ModelState);
+		return (await Post(milestoneDto, cancellationToken)).Match<ActionResult<MilestoneDtoWithId>>(
+			(Milestone milestone) => CreatedAtAction(nameof(GetMilestone), new { milestoneId = milestone.Id }, milestone),
+			(ValidationFailure _) => ValidationProblem(ModelState),
+			(Conflict _) => Conflict(),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 
 	[HttpGet("{milestoneId}")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
-	public async Task<ActionResult<Milestone>> GetMilestone(MilestoneId milestoneId)
+	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<ActionResult<MilestoneDtoWithId>> GetMilestone(MilestoneId milestoneId, CancellationToken cancellationToken)
 	{
-		Milestone? milestone = await EntityAccessService.Find(milestoneId);
-
-		return milestone switch
-		{
-			null => NotFound(),
-			_ => milestone
-		};
+		return (await Get(milestoneId, cancellationToken)).Match<ActionResult<MilestoneDtoWithId>>(
+			(Milestone milestone) => new MilestoneDtoWithId(milestone, Mapper),
+			(NotFound _) => NotFound(),
+			(Conflict _) => Conflict(),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 
 	[HttpGet]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	public async Task<ActionResult<IEnumerable<Milestone>>> GetMilestones()
+	[ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<ActionResult<IEnumerable<MilestoneDtoWithId>>> GetMilestones(CancellationToken cancellationToken)
 	{
-		IEnumerable<Milestone> milestones = await EntityAccessService.GetAll();
-
-		return milestones.ToList();
-	}
-
-	private async Task<ActionResult> UpdateMilestone(Milestone project)
-	{
-		await EntityAccessService.Update(project);
-
-		try
-		{
-			await EntityAccessService.SaveChanges();
-		}
-		catch (DbUpdateConcurrencyException ex)
-		{
-			Logger.LogError(ex, "Concurrency exception occurred while trying to delete the project with id {ProjectId}.", project.Id);
-
-			return Conflict();
-		}
-
-		return Ok();
-	}
-
-	private async Task<ActionResult> PutExistingMilestone(Milestone existingMilestone, MilestoneDto milestoneDto, [FromServices] IMapper<Milestone, MilestoneId, MilestoneDto> mapper)
-	{
-		mapper.ToExistingDomainModel(milestoneDto, existingMilestone);
-
-		await ValidateNestedEntitesExistance(existingMilestone, milestoneDto);
-
-		return ModelState.IsValid ? await UpdateMilestone(existingMilestone) : ValidationProblem(ModelState);
+		return (await GetAll(cancellationToken)).Match<ActionResult<IEnumerable<MilestoneDtoWithId>>>(
+			(List<Milestone> milestonesList) => milestonesList.ConvertAll(milestone => new MilestoneDtoWithId(milestone, Mapper)),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 
 	[HttpPut]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound), ProducesResponseType(StatusCodes.Status409Conflict)]
-	public async Task<IActionResult> PutMilestone(MilestoneId milestoneId, MilestoneDto milestoneDto, [FromServices] IMapper<Milestone, MilestoneId, MilestoneDto> mapper)
+	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
+	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<IActionResult> PutMilestone(MilestoneDtoWithId milestoneDtoWithId, CancellationToken cancellationToken)
 	{
-		OneOf<Milestone, Error> validationResult = await ValidateEntityExistance(milestoneId, _milestonesExistanceValidator);
-
-		return await validationResult.Match(
-			milestone => PutExistingMilestone(milestone, milestoneDto, mapper),
-			_ => SysTask.FromResult(ValidationProblem(ModelState)));
+		return (await Put(milestoneDtoWithId.Id, milestoneDtoWithId, cancellationToken)).Match(
+			(Milestone _) => Ok(),
+			(NotFound _) => NotFound(),
+			(ValidationFailure _) => ValidationProblem(ModelState),
+			(Conflict _) => Conflict(),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
-
-	private const string _concurrencyErrorMessageTemplate = "Concurrency exception occurred while trying to {Action} the milestone with id {MilestoneId}.";
 
 	[HttpDelete("{milestoneId}")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound), ProducesResponseType(StatusCodes.Status409Conflict)]
-	public async Task<IActionResult> DeleteMilestone(MilestoneId milestoneId)
+	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
+	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<IActionResult> DeleteMilestone(MilestoneId milestoneId, CancellationToken cancellationToken)
 	{
-		Milestone? milestone = await EntityAccessService.Find(milestoneId);
-
-		if (milestone is null)
-		{
-			return NotFound();
-		}
-
-		await EntityAccessService.Remove(milestone);
-
-		try
-		{
-			await EntityAccessService.SaveChanges();
-
-			return Ok();
-		}
-		catch (DbUpdateConcurrencyException ex)
-		{
-			Logger.LogError(ex, _concurrencyErrorMessageTemplate, "delete", milestoneId);
-
-			return Conflict();
-		}
-		catch (Exception ex)
-		{
-			Logger.LogError(ex, "Unexpected exception occurred in {ActionName} endpoint.", nameof(DeleteMilestone));
-
-			throw;
-		}
+		return (await Delete(milestoneId, cancellationToken)).Match(
+			(Success _) => Ok(),
+			(NotFound _) => NotFound(),
+			(Conflict _) => Conflict(),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 }

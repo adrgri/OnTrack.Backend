@@ -1,13 +1,14 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 using OneOf;
 using OneOf.Types;
 
 using OnTrack.Backend.Api.Application.Mappings;
+using OnTrack.Backend.Api.DataAccess;
 using OnTrack.Backend.Api.Dto;
 using OnTrack.Backend.Api.Models;
 using OnTrack.Backend.Api.Services;
+using OnTrack.Backend.Api.Threading;
 using OnTrack.Backend.Api.Validation;
 
 namespace OnTrack.Backend.Api.Controllers;
@@ -15,142 +16,116 @@ namespace OnTrack.Backend.Api.Controllers;
 [ApiController, Route("/api/project")]
 public sealed class ProjectsController(
 	ILogger<ProjectsController> logger,
-	IEntityAccessService<Project, ProjectId> projectsService,
-	IAsyncCollectionValidator<ProjectId, OneOf<Project, EntityIdErrorsDescription<ProjectId>>> projectsExistanceValidator,
-	IAsyncCollectionValidator<IdentitySystemObjectId, OneOf<AppUser, EntityIdErrorsDescription<IdentitySystemObjectId>>> appUserExistanceValidator,
-	IAsyncCollectionValidator<MilestoneId, OneOf<Milestone, EntityIdErrorsDescription<MilestoneId>>> milestoneExistanceValidator)
-	: GenericController<Project, ProjectId, ProjectDto, ProjectsController>(logger, projectsService)
+	IEntityAccessService<ProjectId, Project> projectsAccessService,
+	IMapper<ProjectId, Project, ProjectDto> mapper,
+	IAsyncCollectionValidator<ProjectId, OneOf<Project, EntityIdErrorsDescription<ProjectId>>> projectsExistenceValidator,
+	IAsyncCollectionValidator<IdentitySystemObjectId, OneOf<AppUser, EntityIdErrorsDescription<IdentitySystemObjectId>>> appUserExistenceValidator,
+	IAsyncCollectionValidator<MilestoneId, OneOf<Milestone, EntityIdErrorsDescription<MilestoneId>>> milestoneExistenceValidator)
+	: GenericController<ProjectId, Project, ProjectDto, ProjectsController>(logger, projectsAccessService, mapper, projectsExistenceValidator)
 {
-	private readonly IAsyncCollectionValidator<ProjectId, OneOf<Project, EntityIdErrorsDescription<ProjectId>>> _projectsExistanceValidator = projectsExistanceValidator;
-	private readonly IAsyncCollectionValidator<IdentitySystemObjectId, OneOf<AppUser, EntityIdErrorsDescription<IdentitySystemObjectId>>> _appUserExistanceValidator = appUserExistanceValidator;
-	private readonly IAsyncCollectionValidator<MilestoneId, OneOf<Milestone, EntityIdErrorsDescription<MilestoneId>>> _milestoneExistanceValidator = milestoneExistanceValidator;
+	private readonly IAsyncCollectionValidator<IdentitySystemObjectId, OneOf<AppUser, EntityIdErrorsDescription<IdentitySystemObjectId>>> _appUserExistenceValidator = appUserExistenceValidator;
+	private readonly IAsyncCollectionValidator<MilestoneId, OneOf<Milestone, EntityIdErrorsDescription<MilestoneId>>> _milestoneExistenceValidator = milestoneExistenceValidator;
 
-	private async SysTask ValidateNestedEntitesExistance(Project project, ProjectDto projectDto)
+	private async SysTask ValidateNestedEntitiesExistence(Project project, ProjectDto projectDto)
 	{
 		project.Members = [];
 		project.Milestones = [];
 
-		await ValidateEntitiesExistance(projectDto.MemberIds, project.Members, _appUserExistanceValidator);
+		await ValidateEntitiesExistence(projectDto.MemberIds, project.Members, _appUserExistenceValidator);
 
 		if (projectDto.MilestoneIds is not null)
 		{
-			await ValidateEntitiesExistance(projectDto.MilestoneIds, project.Milestones, _milestoneExistanceValidator);
+			await ValidateEntitiesExistence(projectDto.MilestoneIds, project.Milestones, _milestoneExistenceValidator);
 		}
 	}
 
-	private async Task<ActionResult<Project>> AddProject(Project project)
+	protected override async Task<OneOf<Project, ValidationFailure>> ConvertToNewDomainModel(ProjectDto entityDto)
 	{
-		await EntityAccessService.Add(project);
-		await EntityAccessService.SaveChanges();
+		Project project = Mapper.ToNewDomainModel(entityDto);
 
-		return CreatedAtAction(nameof(GetProject), new { projectId = project.Id }, project);
+		await ValidateNestedEntitiesExistence(project, entityDto);
+
+		return ModelState.IsValid ? project : new ValidationFailure();
+	}
+
+	protected override async Task<OneOf<Project, NotFound, ValidationFailure>> ConvertToNewDomainModel(ProjectId entityId, ProjectDto entityDto)
+	{
+		return await (await ValidateEntityExistence(entityId, EntityCollectionValidator)).Match(async project =>
+		{
+			Mapper.ToExistingDomainModel(entityDto, project);
+
+			await ValidateNestedEntitiesExistence(project, entityDto);
+
+			return ModelState.IsValid ? project : new ValidationFailure();
+		},
+		(NotFound notFound) => SysTask.FromResult<OneOf<Project, NotFound, ValidationFailure>>(notFound));
 	}
 
 	[HttpPost]
 	[ProducesResponseType(StatusCodes.Status201Created)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
-	public async Task<ActionResult<Project>> PostProject(ProjectDto projectDto, [FromServices] IMapper<Project, ProjectId, ProjectDto> mapper)
+	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<ActionResult<ProjectDtoWithId>> PostProject(ProjectDto projectDto, CancellationToken cancellationToken)
 	{
-		Project project = mapper.ToNewDomainModel(projectDto);
-
-		await ValidateNestedEntitesExistance(project, projectDto);
-
-		return ModelState.IsValid ? await AddProject(project) : ValidationProblem(ModelState);
+		return (await Post(projectDto, cancellationToken)).Match<ActionResult<ProjectDtoWithId>>(
+			(Project project) => CreatedAtAction(nameof(GetProject), new { projectId = project.Id }, project),
+			(ValidationFailure _) => ValidationProblem(ModelState),
+			(Conflict _) => Conflict(),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 
 	[HttpGet("{projectId}")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
-	public async Task<ActionResult<Project>> GetProject(ProjectId projectId)
+	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<ActionResult<ProjectDtoWithId>> GetProject(ProjectId projectId, CancellationToken cancellationToken)
 	{
-		Project? project = await EntityAccessService.Find(projectId);
-
-		return project switch
-		{
-			null => NotFound(),
-			_ => project
-		};
+		return (await Get(projectId, cancellationToken)).Match<ActionResult<ProjectDtoWithId>>(
+			(Project project) => new ProjectDtoWithId(project, Mapper),
+			(NotFound _) => NotFound(),
+			(Conflict _) => Conflict(),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 
 	[HttpGet]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	public async Task<ActionResult<IEnumerable<Project>>> GetProjects()
+	[ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<ActionResult<IEnumerable<ProjectDtoWithId>>> GetProjects(CancellationToken cancellationToken)
 	{
-		IEnumerable<Project> projects = await EntityAccessService.GetAll();
-
-		return projects.ToList();
-	}
-
-	private async Task<ActionResult> UpdateProject(Project project)
-	{
-		await EntityAccessService.Update(project);
-
-		try
-		{
-			await EntityAccessService.SaveChanges();
-		}
-		catch (DbUpdateConcurrencyException ex)
-		{
-			Logger.LogError(ex, "Concurrency exception occurred while trying to delete the project with id {ProjectId}.", project.Id);
-
-			return Conflict();
-		}
-
-		return Ok();
-	}
-
-	private async Task<ActionResult> PutExistingProject(Project existingProject, ProjectDto projectDto, [FromServices] IMapper<Project, ProjectId, ProjectDto> mapper)
-	{
-		mapper.ToExistingDomainModel(projectDto, existingProject);
-
-		await ValidateNestedEntitesExistance(existingProject, projectDto);
-
-		return ModelState.IsValid ? await UpdateProject(existingProject) : ValidationProblem(ModelState);
+		return (await GetAll(cancellationToken)).Match<ActionResult<IEnumerable<ProjectDtoWithId>>>(
+			(List<Project> projectsList) => projectsList.ConvertAll(project => new ProjectDtoWithId(project, Mapper)),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 
 	[HttpPut]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
-	public async Task<ActionResult> PutProject(ProjectId projectId, ProjectDto projectDto, [FromServices] IMapper<Project, ProjectId, ProjectDto> mapper)
+	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<IActionResult> PutProject(ProjectDtoWithId projectDtoWithId, CancellationToken cancellationToken)
 	{
-		OneOf<Project, Error> validationResult = await ValidateEntityExistance(projectId, _projectsExistanceValidator);
-
-		return await validationResult.Match(
-			project => PutExistingProject(project, projectDto, mapper),
-			_ => SysTask.FromResult(ValidationProblem(ModelState)));
+		return (await Put(projectDtoWithId.Id, projectDtoWithId, cancellationToken)).Match(
+			(Project _) => Ok(),
+			(NotFound _) => NotFound(),
+			(ValidationFailure _) => ValidationProblem(ModelState),
+			(Conflict _) => Conflict(),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 
 	[HttpDelete("{projectId}")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound), ProducesResponseType(StatusCodes.Status409Conflict)]
-	public async Task<IActionResult> DeleteProject(ProjectId projectId)
+	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
+	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<IActionResult> DeleteProject(ProjectId projectId, CancellationToken cancellationToken)
 	{
-		Project? project = await EntityAccessService.Find(projectId);
-
-		if (project is null)
-		{
-			return NotFound();
-		}
-
-		await EntityAccessService.Remove(project);
-
-		try
-		{
-			await EntityAccessService.SaveChanges();
-
-			return Ok();
-		}
-		catch (DbUpdateConcurrencyException ex)
-		{
-			Logger.LogError(ex, "Concurrency exception occurred while trying to delete the project with id {ProjectId}.", projectId);
-
-			return Conflict();
-		}
-		catch (Exception ex)
-		{
-			Logger.LogError(ex, "Unexpected exception occurred in {ActionName} endpoint.", nameof(DeleteProject));
-
-			throw;
-		}
+		return (await Delete(projectId, cancellationToken)).Match(
+			(Success _) => Ok(),
+			(NotFound _) => NotFound(),
+			(Conflict _) => Conflict(),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 }
