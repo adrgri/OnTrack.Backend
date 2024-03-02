@@ -67,10 +67,18 @@ internal static class AppExtensions
 
 	public static void ConfigureOptions(this WebApplicationBuilder builder, ILogger<Program> logger)
 	{
+		IDictionary<string, Action> optionsToConfigure = new Dictionary<string, Action>()
+		{
+			{ nameof(SmtpEmailServicesOptions), builder.ConfigureSmtpEmailServicesOptions }
+		};
+
 		ConfigurationWrapper(() =>
 		{
-			logger.LogInformation("Adding {options}...", nameof(SmtpEmailServicesOptions));
-			builder.ConfigureSmtpEmailServicesOptions();
+			foreach (KeyValuePair<string, Action> optionToConfigure in optionsToConfigure)
+			{
+				logger.LogInformation("Configuring {options}...", optionToConfigure.Key);
+				optionToConfigure.Value();
+			}
 		}, "Options", logger);
 	}
 
