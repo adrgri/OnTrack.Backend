@@ -26,6 +26,7 @@ public sealed class TasksController(
 	IAsyncCollectionValidator<AttachmentId, OneOf<Attachment, EntityIdErrorsDescription<AttachmentId>>> attachmentsExistenceValidator)
 	: GenericController<TaskId, Task, TaskDto, TasksController>(logger, tasksAccessService, mapper, tasksCollectionValidator)
 {
+	// TODO: Move all of those to a Task validator, they are not needed here for anything else than validation
 	private readonly IAsyncCollectionValidator<MilestoneId, OneOf<Milestone, EntityIdErrorsDescription<MilestoneId>>> _milestoneExistenceValidator = milestoneExistenceValidator;
 	private readonly IAsyncCollectionValidator<IconId, OneOf<Icon, EntityIdErrorsDescription<IconId>>> _iconsExistenceValidator = iconsExistenceValidator;
 	private readonly IAsyncCollectionValidator<ResourceId, OneOf<Resource, EntityIdErrorsDescription<ResourceId>>> _resourcesExistenceValidator = resourcesExistenceValidator;
@@ -33,6 +34,15 @@ public sealed class TasksController(
 
 	private async SysTask ValidateNestedEntitiesExistence(Task task, TaskDto taskDto)
 	{
+		// TODO: Don't forget to validate for recursive subtasks:
+		//	1. The task can't be its own subtask
+		//	2. Any of the subtasks can not contain any of the parent tasks as their subtasks
+		//	   Validate the entire tasks/subtasks tree, maybe this could be done by adding task Ids to a list and then validating the subtask ids against this list
+		//	   and if an id is found, then it'd be an illegal recursive assignment and thus a bad request?
+
+		// TODO: Check for duplicate subtasks: if any of the subtasks are repeated any number of times then it's a bad request,
+		//		 you can group by the subtask ids and then check if any of the groups have a count greater than 1
+
 		task.AssignedResources = [];
 		task.Attachments = [];
 		task.Subtasks = [];
