@@ -1,6 +1,6 @@
 ﻿namespace OnTrack.Backend.Api.Dto;
 
-public sealed record class ResourceDto : IDto
+public record class ResourceDto : IDto
 {
 	public string Name { get; set; }
 	public string? Description { get; set; }

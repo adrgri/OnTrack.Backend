@@ -2,7 +2,7 @@
 
 namespace OnTrack.Backend.Api.Dto;
 
-public sealed record class TaskDto : IDto
+public record class TaskDto : IDto
 {
 	public MilestoneId MilestoneId { get; set; }
 	public string Title { get; set; }

@@ -6,7 +6,7 @@ using OnTrack.Backend.Api.Models;
 
 namespace OnTrack.Backend.Api.Dto;
 
-public sealed record class AppUserDto : IDto
+public record class AppUserDto : IDto
 {
 	[ProtectedPersonalData]
 	public string? UserName { get; set; }

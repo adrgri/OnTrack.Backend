@@ -3,7 +3,7 @@ using OnTrack.Backend.Api.Models;
 
 namespace OnTrack.Backend.Api.Dto;
 
-public sealed record class ProjectDto : IDto
+public record class ProjectDto : IDto
 {
 	public string Title { get; set; }
 	public string? Description { get; set; }
