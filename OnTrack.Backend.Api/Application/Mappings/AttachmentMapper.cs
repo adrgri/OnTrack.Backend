@@ -1,5 +1,6 @@
 ﻿using OnTrack.Backend.Api.Dto;
 using OnTrack.Backend.Api.Models;
+
 using Riok.Mapperly.Abstractions;
 
 namespace OnTrack.Backend.Api.Application.Mappings;

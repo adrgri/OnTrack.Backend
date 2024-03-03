@@ -142,7 +142,7 @@ public sealed class TasksController(
 	public async Task<IActionResult> PutTask(TaskDtoWithId taskDtoWithId, CancellationToken cancellationToken)
 	{
 		return (await Put(taskDtoWithId.Id, taskDtoWithId, cancellationToken)).Match(
-			(Task _)=> Ok(),
+			(Task _) => Ok(),
 			(NotFound _) => NotFound(),
 			(ValidationFailure _) => ValidationProblem(ModelState),
 			(Conflict _) => Conflict(),
