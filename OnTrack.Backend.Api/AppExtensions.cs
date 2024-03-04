@@ -286,7 +286,7 @@ internal static class AppExtensions
 
 			builder.Services.AddHealthChecks();
 
-			builder.Services.AddIdentityApiEndpoints<AppUser>()
+			builder.Services.AddIdentityApiEndpoints<AppUser>(options => options.User.RequireUniqueEmail = true)
 				.AddEntityFrameworkStores<AppDbContext>()
 				.AddDefaultTokenProviders()
 				.AddApiEndpoints();
