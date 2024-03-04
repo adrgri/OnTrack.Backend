@@ -1,4 +1,6 @@
-﻿namespace OnTrack.Backend.Api;
+﻿using OnTrack.Backend.Api.Models;
+
+namespace OnTrack.Backend.Api;
 
 public static class Guard
 {
@@ -6,8 +8,8 @@ public static class Guard
 	{
 #if ApplicationGeneratedGuidIdsAllowed == false
 		public static void InsertingEntitiesWithApplicationGeneratedGuidIds<TEntity, TEntityId>(TEntity entity)
-			where TEntity : Models.IEntity<TEntityId>
-			where TEntityId : Models.IStronglyTypedId
+			where TEntity : IEntity<TEntityId>
+			where TEntityId : IStronglyTypedId
 		{
 			if (entity.Id.Value != Guid.Empty)
 			{
