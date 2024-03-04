@@ -7,6 +7,11 @@ public sealed record class IconDtoWithId : IconDto, IDtoWithId<IconId>
 {
 	public IconId Id { get; set; }
 
+	public IconDtoWithId()
+	{
+		
+	}
+
 	public IconDtoWithId(Icon icon, IMapper<IconId, Icon, IconDto> mapper)
 	{
 		mapper.ToExistingDto(icon, this);

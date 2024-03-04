@@ -7,6 +7,11 @@ public sealed record class LanguageDtoWithId : LanguageDto, IDtoWithId<LanguageI
 {
 	public LanguageId Id { get; set; }
 
+	public LanguageDtoWithId()
+	{
+		
+	}
+
 	public LanguageDtoWithId(Language language, IMapper<LanguageId, Language, LanguageDto> mapper)
 	{
 		mapper.ToExistingDto(language, this);

@@ -7,6 +7,11 @@ public sealed record class MilestoneDtoWithId : MilestoneDto, IDtoWithId<Milesto
 {
 	public MilestoneId Id { get; set; }
 
+	public MilestoneDtoWithId()
+	{
+		
+	}
+
 	public MilestoneDtoWithId(Milestone milestone, IMapper<MilestoneId, Milestone, MilestoneDto> mapper)
 	{
 		mapper.ToExistingDto(milestone, this);

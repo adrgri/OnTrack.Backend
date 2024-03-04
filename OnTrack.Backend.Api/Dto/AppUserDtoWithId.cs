@@ -7,6 +7,11 @@ public sealed record class AppUserDtoWithId : AppUserDto, IDtoWithId<IdentitySys
 {
 	public IdentitySystemObjectId Id { get; set; }
 
+	public AppUserDtoWithId()
+	{
+		
+	}
+
 	public AppUserDtoWithId(AppUser user, IMapper<IdentitySystemObjectId, AppUser, AppUserDto> mapper)
 	{
 		mapper.ToExistingDto(user, this);

@@ -7,6 +7,11 @@ public sealed record class ResourceDtoWithId : ResourceDto, IDtoWithId<ResourceI
 {
 	public ResourceId Id { get; set; }
 
+	public ResourceDtoWithId()
+	{
+		
+	}
+
 	public ResourceDtoWithId(Resource resource, IMapper<ResourceId, Resource, ResourceDto> mapper)
 	{
 		mapper.ToExistingDto(resource, this);

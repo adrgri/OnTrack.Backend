@@ -7,6 +7,11 @@ public sealed record class AttachmentDtoWithId : AttachmentDto, IDtoWithId<Attac
 {
 	public AttachmentId Id { get; set; }
 
+	public AttachmentDtoWithId()
+	{
+		
+	}
+
 	public AttachmentDtoWithId(Attachment attachment, IMapper<AttachmentId, Attachment, AttachmentDto> mapper)
 	{
 		mapper.ToExistingDto(attachment, this);
