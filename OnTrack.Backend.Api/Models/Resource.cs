@@ -5,9 +5,8 @@ using OnTrack.Backend.Api.Infrastructure.DataAccess;
 namespace OnTrack.Backend.Api.Models;
 
 [EntityTypeConfiguration<StronglyTypedIdEntityConfiguration<ResourceId, Resource>, Resource>]
-public sealed record class Resource : IEntity<ResourceId>
+public sealed record class Resource : Entity<ResourceId>
 {
-	public ResourceId Id { get; set; }
 	public string Name { get; set; }
 	public string? Description { get; set; }
 	public int Quantity { get; set; }
