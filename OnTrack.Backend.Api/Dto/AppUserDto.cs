@@ -11,6 +11,7 @@ public record class AppUserDto : IDto
 	[ProtectedPersonalData]
 	public string? UserName { get; set; }
 
+	[EmailAddress]
 	[ProtectedPersonalData]
 	public string? Email { get; set; }
 
@@ -39,6 +40,7 @@ public record class AppUserDto : IDto
 	[PersonalData]
 	public bool EmailConfirmed { get; set; }
 
+	[Phone]
 	[ProtectedPersonalData]
 	public string? PhoneNumber { get; set; }
 
