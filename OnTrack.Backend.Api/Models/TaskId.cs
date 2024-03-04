@@ -8,4 +8,15 @@ namespace OnTrack.Backend.Api.Models;
 
 [TypeConverter(typeof(StronglyTypedIdTypeConverter<TaskId>))]
 [JsonConverter(typeof(StronglyTypedIdJsonConverter<TaskId>))]
-public sealed record class TaskId : StronglyTypedId;
+public sealed record class TaskId : StronglyTypedId
+{
+	public static implicit operator TaskId(Guid value)
+	{
+		return new(value);
+	}
+
+	public static implicit operator Guid(TaskId id)
+	{
+		return id.Value;
+	}
+}
