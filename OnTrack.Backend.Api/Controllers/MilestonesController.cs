@@ -80,7 +80,7 @@ public sealed class MilestonesController(
 	public async Task<ActionResult<MilestoneDtoWithId>> PostMilestone(MilestoneDto milestoneDto, CancellationToken cancellationToken)
 	{
 		return (await Post(milestoneDto, cancellationToken)).Match<ActionResult<MilestoneDtoWithId>>(
-			(Milestone milestone) => CreatedAtAction(nameof(GetMilestone), new { milestoneId = milestone.Id }, milestone),
+			(Milestone milestone) => CreatedAtAction(nameof(GetMilestone), new { milestoneId = milestone.Id }, new MilestoneDtoWithId(milestone, Mapper)),
 			(ValidationFailure _) => ValidationProblem(ModelState),
 			(Conflict _) => Conflict(),
 			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),

@@ -68,7 +68,7 @@ public sealed class ProjectsController(
 	public async Task<ActionResult<ProjectDtoWithId>> PostProject(ProjectDto projectDto, CancellationToken cancellationToken)
 	{
 		return (await Post(projectDto, cancellationToken)).Match<ActionResult<ProjectDtoWithId>>(
-			(Project project) => CreatedAtAction(nameof(GetProject), new { projectId = project.Id }, project),
+			(Project project) => CreatedAtAction(nameof(GetProject), new { projectId = project.Id }, new ProjectDtoWithId(project, Mapper)),
 			(ValidationFailure _) => ValidationProblem(ModelState),
 			(Conflict _) => Conflict(),
 			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),

@@ -103,7 +103,7 @@ public sealed class TasksController(
 	public async Task<ActionResult<TaskDtoWithId>> PostTask(TaskDto taskDto, CancellationToken cancellationToken)
 	{
 		return (await Post(taskDto, cancellationToken)).Match<ActionResult<TaskDtoWithId>>(
-			(Task task) => CreatedAtAction(nameof(GetTask), new { taskId = task.Id }, task),
+			(Task task) => CreatedAtAction(nameof(GetTask), new { taskId = task.Id }, new TaskDtoWithId(task, Mapper)),
 			(ValidationFailure _) => ValidationProblem(ModelState),
 			(Conflict _) => Conflict(),
 			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
