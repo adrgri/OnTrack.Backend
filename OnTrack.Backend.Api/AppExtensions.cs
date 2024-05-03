@@ -260,7 +260,6 @@ internal static class AppExtensions
 		ConfigurationWrapper(() =>
 		{
 			builder.Services.AddHsts(options => options.IncludeSubDomains = true);
-			builder.Services.AddAntiforgery();
 
 			builder.Services.AddDbContext<AppDbContext>(options =>
 			{
@@ -417,7 +416,6 @@ internal static class AppExtensions
 		{
 			app.UseHttpsRedirection();
 			app.UseHsts();
-			app.UseAntiforgery();
 
 			app.UseSerilogRequestLogging();
 
