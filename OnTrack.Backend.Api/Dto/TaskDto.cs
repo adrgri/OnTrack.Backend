@@ -4,7 +4,7 @@ namespace OnTrack.Backend.Api.Dto;
 
 public record class TaskDto : IDto
 {
-	public MilestoneId MilestoneId { get; set; }
+	public ProjectId ProjectId { get; set; }
 	public string Title { get; set; }
 	public string? Description { get; set; }
 	public DateTime? StartDate { get; set; }

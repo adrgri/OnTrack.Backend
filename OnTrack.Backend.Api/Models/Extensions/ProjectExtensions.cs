@@ -2,23 +2,18 @@
 
 public static class ProjectExtensions
 {
-	public static int NumberOfMilestones(this Project project)
-	{
-		return project.Milestones?.Count ?? 0;
-	}
-
 	public static int NumberOfTasks(this Project project)
 	{
 		int numberOfTasks = 0;
 
-		if (project.Milestones is null)
+		if (project.Tasks is null)
 		{
 			return numberOfTasks;
 		}
 
-		foreach (Milestone milestone in project.Milestones)
+		foreach (Task task in project.Tasks)
 		{
-			numberOfTasks += milestone.NumberOfTasks();
+			numberOfTasks += task.NumberOfSubtasks();
 		}
 
 		return numberOfTasks;

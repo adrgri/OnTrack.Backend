@@ -8,11 +8,11 @@ public sealed class EfTasksAccessService<TDbContext>(TDbContext context)
 	: EfEntityAccessService<TaskId, Task, TDbContext>(context)
 	where TDbContext : DbContext
 {
-	private void SetNestedMilestoneState(Milestone existingMilestone, CancellationToken cancellationToken)
+	private void SetNestedProjectState(Project existingProject, CancellationToken cancellationToken)
 	{
 		cancellationToken.ThrowIfCancellationRequested();
 
-		Context.Entry(existingMilestone).State = EntityState.Modified;
+		Context.Entry(existingProject).State = EntityState.Modified;
 	}
 
 	private void SetNestedTasksState(ICollection<Task> existingTasks, CancellationToken cancellationToken)
@@ -29,7 +29,7 @@ public sealed class EfTasksAccessService<TDbContext>(TDbContext context)
 	{
 		cancellationToken.ThrowIfCancellationRequested();
 
-		SetNestedMilestoneState(entity.Milestone, cancellationToken);
+		SetNestedProjectState(entity.Project, cancellationToken);
 
 		if (entity.Subtasks is not null)
 		{
@@ -49,7 +49,7 @@ public sealed class EfTasksAccessService<TDbContext>(TDbContext context)
 	public override async Task<Task?> Find(TaskId id, CancellationToken cancellationToken)
 	{
 		return await Query(cancellationToken)
-			.Include(task => task.Milestone)
+			.Include(task => task.Project)
 			.Include(task => task.Icon)
 			.Include(task => task.AssignedResources)
 			.Include(task => task.Attachments)
@@ -61,7 +61,7 @@ public sealed class EfTasksAccessService<TDbContext>(TDbContext context)
 	public override async Task<IEnumerable<Task>> GetAll(CancellationToken cancellationToken)
 	{
 		return await Query(cancellationToken)
-			.Include(task => task.Milestone)
+			.Include(task => task.Project)
 			.Include(task => task.Icon)
 			.Include(task => task.AssignedResources)
 			.Include(task => task.Attachments)

@@ -20,14 +20,14 @@ public sealed class TasksController(
 	IEntityAccessService<TaskId, Task> tasksAccessService,
 	IMapper<TaskId, Task, TaskDto> mapper,
 	IAsyncCollectionValidator<TaskId, OneOf<Task, EntityIdErrorsDescription<TaskId>>> tasksCollectionValidator,
-	IAsyncCollectionValidator<MilestoneId, OneOf<Milestone, EntityIdErrorsDescription<MilestoneId>>> milestoneExistenceValidator,
+	IAsyncCollectionValidator<ProjectId, OneOf<Project, EntityIdErrorsDescription<ProjectId>>> projectExistenceValidator,
 	IAsyncCollectionValidator<IconId, OneOf<Icon, EntityIdErrorsDescription<IconId>>> iconsExistenceValidator,
 	IAsyncCollectionValidator<ResourceId, OneOf<Resource, EntityIdErrorsDescription<ResourceId>>> resourcesExistenceValidator,
 	IAsyncCollectionValidator<AttachmentId, OneOf<Attachment, EntityIdErrorsDescription<AttachmentId>>> attachmentsExistenceValidator)
 	: GenericController<TaskId, Task, TaskDto, TasksController>(logger, tasksAccessService, mapper, tasksCollectionValidator)
 {
 	// TODO: Move all of those to a Task validator, they are not needed here for anything else than validation
-	private readonly IAsyncCollectionValidator<MilestoneId, OneOf<Milestone, EntityIdErrorsDescription<MilestoneId>>> _milestoneExistenceValidator = milestoneExistenceValidator;
+	private readonly IAsyncCollectionValidator<ProjectId, OneOf<Project, EntityIdErrorsDescription<ProjectId>>> _projectExistenceValidator = projectExistenceValidator;
 	private readonly IAsyncCollectionValidator<IconId, OneOf<Icon, EntityIdErrorsDescription<IconId>>> _iconsExistenceValidator = iconsExistenceValidator;
 	private readonly IAsyncCollectionValidator<ResourceId, OneOf<Resource, EntityIdErrorsDescription<ResourceId>>> _resourcesExistenceValidator = resourcesExistenceValidator;
 	private readonly IAsyncCollectionValidator<AttachmentId, OneOf<Attachment, EntityIdErrorsDescription<AttachmentId>>> _attachmentsExistenceValidator = attachmentsExistenceValidator;
@@ -47,9 +47,9 @@ public sealed class TasksController(
 		task.Attachments = [];
 		task.Subtasks = [];
 
-		OneOf<Milestone, NotFound> milestoneValidationResult = await ValidateEntityExistence(taskDto.MilestoneId, _milestoneExistenceValidator);
+		OneOf<Project, NotFound> projectValidationResult = await ValidateEntityExistence(taskDto.ProjectId, _projectExistenceValidator);
 
-		milestoneValidationResult.AssignIfSucceeded(existingMilestone => task.Milestone = existingMilestone);
+		projectValidationResult.AssignIfSucceeded(existingProject => task.Project = existingProject);
 
 		if (taskDto.IconId is not null)
 		{

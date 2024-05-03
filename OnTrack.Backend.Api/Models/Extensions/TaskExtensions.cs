@@ -2,7 +2,7 @@
 
 public static class TaskExtensions
 {
-	public static int NumberOfTasks(this Task task)
+	public static int NumberOfSubtasks(this Task task)
 	{
 		int numberOfTasks = 1;
 
@@ -13,7 +13,7 @@ public static class TaskExtensions
 
 		foreach (Task subtask in task.Subtasks)
 		{
-			numberOfTasks += subtask.NumberOfTasks();
+			numberOfTasks += subtask.NumberOfSubtasks();
 		}
 
 		return numberOfTasks;

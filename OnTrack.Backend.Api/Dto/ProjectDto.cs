@@ -10,5 +10,5 @@ public record class ProjectDto : IDto
 	//public PathString? ImagePath { get; set; }
 	[MustContainAtLeastOneElement]
 	public ICollection<IdentitySystemObjectId> MemberIds { get; set; }
-	public ICollection<MilestoneId>? MilestoneIds { get; set; }
+	public ICollection<TaskId>? TaskIds { get; set; }
 }

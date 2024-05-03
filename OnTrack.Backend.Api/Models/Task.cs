@@ -8,7 +8,7 @@ namespace OnTrack.Backend.Api.Models;
 [EntityTypeConfiguration<StronglyTypedIdEntityConfiguration<TaskId, Task>, Task>]
 public sealed record class Task : Entity<TaskId>
 {
-	public Milestone Milestone { get; set; }
+	public Project Project { get; set; }
 	public string Title { get; set; }
 	public string? Description { get; set; }
 	public DateTime? StartDate { get; set; }

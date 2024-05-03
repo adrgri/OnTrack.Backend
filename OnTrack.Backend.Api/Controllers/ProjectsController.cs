@@ -20,22 +20,22 @@ public sealed class ProjectsController(
 	IMapper<ProjectId, Project, ProjectDto> mapper,
 	IAsyncCollectionValidator<ProjectId, OneOf<Project, EntityIdErrorsDescription<ProjectId>>> projectsExistenceValidator,
 	IAsyncCollectionValidator<IdentitySystemObjectId, OneOf<AppUser, EntityIdErrorsDescription<IdentitySystemObjectId>>> appUserExistenceValidator,
-	IAsyncCollectionValidator<MilestoneId, OneOf<Milestone, EntityIdErrorsDescription<MilestoneId>>> milestoneExistenceValidator)
+	IAsyncCollectionValidator<TaskId, OneOf<Task, EntityIdErrorsDescription<TaskId>>> taskExistenceValidator)
 	: GenericController<ProjectId, Project, ProjectDto, ProjectsController>(logger, projectsAccessService, mapper, projectsExistenceValidator)
 {
 	private readonly IAsyncCollectionValidator<IdentitySystemObjectId, OneOf<AppUser, EntityIdErrorsDescription<IdentitySystemObjectId>>> _appUserExistenceValidator = appUserExistenceValidator;
-	private readonly IAsyncCollectionValidator<MilestoneId, OneOf<Milestone, EntityIdErrorsDescription<MilestoneId>>> _milestoneExistenceValidator = milestoneExistenceValidator;
+	private readonly IAsyncCollectionValidator<TaskId, OneOf<Task, EntityIdErrorsDescription<TaskId>>> _taskExistenceValidator = taskExistenceValidator;
 
 	private async SysTask ValidateNestedEntitiesExistence(Project project, ProjectDto projectDto)
 	{
 		project.Members = [];
-		project.Milestones = [];
+		project.Tasks = [];
 
 		await ValidateEntitiesExistence(projectDto.MemberIds, project.Members, _appUserExistenceValidator);
 
-		if (projectDto.MilestoneIds is not null)
+		if (projectDto.TaskIds is not null)
 		{
-			await ValidateEntitiesExistence(projectDto.MilestoneIds, project.Milestones, _milestoneExistenceValidator);
+			await ValidateEntitiesExistence(projectDto.TaskIds, project.Tasks, _taskExistenceValidator);
 		}
 	}
 

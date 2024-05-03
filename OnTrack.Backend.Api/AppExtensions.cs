@@ -322,7 +322,6 @@ internal static class AppExtensions
 			builder.Services.AddTransient<IEntityAccessService<AttachmentId, Attachment>, EfEntityAccessService<AttachmentId, Attachment, AppDbContext>>();
 			builder.Services.AddTransient<IEntityAccessService<IconId, Icon>, EfEntityAccessService<IconId, Icon, AppDbContext>>();
 			builder.Services.AddTransient<IEntityAccessService<LanguageId, Language>, EfEntityAccessService<LanguageId, Language, AppDbContext>>();
-			builder.Services.AddTransient<IEntityAccessService<MilestoneId, Milestone>, EfMilestonesAccessService<AppDbContext>>();
 			builder.Services.AddTransient<IEntityAccessService<ProjectId, Project>, EfProjectsAccessService<AppDbContext>>();
 			builder.Services.AddTransient<IEntityAccessService<ResourceId, Resource>, EfEntityAccessService<ResourceId, Resource, AppDbContext>>();
 			builder.Services.AddTransient<IEntityAccessService<StatusId, Status>, EfEntityAccessService<StatusId, Status, AppDbContext>>();
@@ -338,7 +337,6 @@ internal static class AppExtensions
 			builder.Services.AddSingleton<IMapper<AttachmentId, Attachment, AttachmentDto>, AttachmentMapper>();
 			builder.Services.AddSingleton<IMapper<IconId, Icon, IconDto>, IconMapper>();
 			builder.Services.AddSingleton<IMapper<LanguageId, Language, LanguageDto>, LanguageMapper>();
-			builder.Services.AddSingleton<IMapper<MilestoneId, Milestone, MilestoneDto>, MilestoneMapper>();
 			builder.Services.AddSingleton<IMapper<ProjectId, Project, ProjectDto>, ProjectMapper>();
 			builder.Services.AddSingleton<IMapper<ResourceId, Resource, ResourceDto>, ResourceMapper>();
 			builder.Services.AddSingleton<IMapper<StatusId, Status, StatusDto>, StatusMapper>();
@@ -354,7 +352,6 @@ internal static class AppExtensions
 			builder.Services.AddTransient<IAsyncCollectionValidator<AttachmentId, OneOf<Attachment, EntityIdErrorsDescription<AttachmentId>>>, EntityByIdExistenceValidator<AttachmentId, Attachment>>();
 			builder.Services.AddTransient<IAsyncCollectionValidator<IconId, OneOf<Icon, EntityIdErrorsDescription<IconId>>>, EntityByIdExistenceValidator<IconId, Icon>>();
 			builder.Services.AddTransient<IAsyncCollectionValidator<LanguageId, OneOf<Language, EntityIdErrorsDescription<LanguageId>>>, EntityByIdExistenceValidator<LanguageId, Language>>();
-			builder.Services.AddTransient<IAsyncCollectionValidator<MilestoneId, OneOf<Milestone, EntityIdErrorsDescription<MilestoneId>>>, EntityByIdExistenceValidator<MilestoneId, Milestone>>();
 			builder.Services.AddTransient<IAsyncCollectionValidator<ProjectId, OneOf<Project, EntityIdErrorsDescription<ProjectId>>>, EntityByIdExistenceValidator<ProjectId, Project>>();
 			builder.Services.AddTransient<IAsyncCollectionValidator<ResourceId, OneOf<Resource, EntityIdErrorsDescription<ResourceId>>>, EntityByIdExistenceValidator<ResourceId, Resource>>();
 			builder.Services.AddTransient<IAsyncCollectionValidator<StatusId, OneOf<Status, EntityIdErrorsDescription<StatusId>>>, EntityByIdExistenceValidator<StatusId, Status>>();

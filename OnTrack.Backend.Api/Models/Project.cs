@@ -13,5 +13,5 @@ public sealed record class Project : Entity<ProjectId>
 	//public PathString? ImagePath { get; set; }
 	[MustContainAtLeastOneElement]
 	public ICollection<AppUser> Members { get; set; }
-	public ICollection<Milestone>? Milestones { get; set; }
+	public ICollection<Task>? Tasks { get; set; }
 }

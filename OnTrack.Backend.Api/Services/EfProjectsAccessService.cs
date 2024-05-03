@@ -18,13 +18,13 @@ public sealed class EfProjectsAccessService<TDbContext>(TDbContext context)
 		}
 	}
 
-	private void SetNestedMilestonesState(ICollection<Milestone> existingMilestones, CancellationToken cancellationToken)
+	private void SetNestedTasksState(ICollection<Task> existingTasks, CancellationToken cancellationToken)
 	{
 		cancellationToken.ThrowIfCancellationRequested();
 
-		foreach (Milestone milestone in existingMilestones)
+		foreach (Task task in existingTasks)
 		{
-			Context.Entry(milestone).State = EntityState.Modified;
+			Context.Entry(task).State = EntityState.Modified;
 		}
 	}
 
@@ -34,9 +34,9 @@ public sealed class EfProjectsAccessService<TDbContext>(TDbContext context)
 
 		SetNestedAppUsersState(entity.Members, cancellationToken);
 
-		if (entity.Milestones is not null)
+		if (entity.Tasks is not null)
 		{
-			SetNestedMilestonesState(entity.Milestones, cancellationToken);
+			SetNestedTasksState(entity.Tasks, cancellationToken);
 		}
 	}
 
@@ -53,7 +53,7 @@ public sealed class EfProjectsAccessService<TDbContext>(TDbContext context)
 	{
 		return await Query(cancellationToken)
 			.Include(project => project.Members)
-			.Include(project => project.Milestones)
+			.Include(project => project.Tasks)
 			.Where(project => project.Id == id)
 			.FirstOrDefaultAsync(cancellationToken);
 	}
@@ -62,7 +62,7 @@ public sealed class EfProjectsAccessService<TDbContext>(TDbContext context)
 	{
 		return await Query(cancellationToken)
 			.Include(project => project.Members)
-			.Include(project => project.Milestones)
+			.Include(project => project.Tasks)
 			.ToListAsync(cancellationToken);
 	}
 

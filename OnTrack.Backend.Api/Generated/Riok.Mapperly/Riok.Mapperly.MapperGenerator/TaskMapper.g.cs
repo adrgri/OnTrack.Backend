@@ -39,7 +39,7 @@ namespace OnTrack.Backend.Api.Application.Mappings
             {
                 entity.Subtasks = null;
             }
-            entity.Milestone = MilestoneMapper.FromId(dto.MilestoneId);
+            entity.Project = ProjectMapper.FromId(dto.ProjectId);
             entity.Title = dto.Title;
             entity.Description = dto.Description;
             entity.StartDate = dto.StartDate;
@@ -82,7 +82,7 @@ namespace OnTrack.Backend.Api.Application.Mappings
             {
                 dto.SubtaskIds = null;
             }
-            dto.MilestoneId = MilestoneMapper.ToId(entity.Milestone);
+            dto.ProjectId = ProjectMapper.ToId(entity.Project);
             dto.Title = entity.Title;
             dto.Description = entity.Description;
             dto.StartDate = entity.StartDate;
@@ -126,7 +126,7 @@ namespace OnTrack.Backend.Api.Application.Mappings
             {
                 target.Subtasks = null;
             }
-            target.Milestone = MilestoneMapper.FromId(dto.MilestoneId);
+            target.Project = ProjectMapper.FromId(dto.ProjectId);
             target.Title = dto.Title;
             target.Description = dto.Description;
             target.StartDate = dto.StartDate;
@@ -171,7 +171,7 @@ namespace OnTrack.Backend.Api.Application.Mappings
             {
                 target.SubtaskIds = null;
             }
-            target.MilestoneId = MilestoneMapper.ToId(entity.Milestone);
+            target.ProjectId = ProjectMapper.ToId(entity.Project);
             target.Title = entity.Title;
             target.Description = entity.Description;
             target.StartDate = entity.StartDate;

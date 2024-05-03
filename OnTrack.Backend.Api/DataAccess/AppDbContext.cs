@@ -10,7 +10,6 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
 {
 	public DbSet<Language> Languages { get; set; }
 	public DbSet<Project> Projects { get; set; }
-	public DbSet<Milestone> Milestones { get; set; }
 	public DbSet<Task> Tasks { get; set; }
 	public DbSet<Resource> Resources { get; set; }
 	public DbSet<Attachment> Attachments { get; set; }
