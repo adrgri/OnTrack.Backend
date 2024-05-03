@@ -76,7 +76,7 @@ internal static class AppExtensions
 		{
 			foreach (KeyValuePair<string, Action> optionToConfigure in optionsToConfigure)
 			{
-				logger.LogInformation("Configuring {options}...", optionToConfigure.Key);
+				logger.LogInformation("Configuring {Options}...", optionToConfigure.Key);
 				optionToConfigure.Value();
 			}
 		}, "Options", logger);

@@ -9,7 +9,6 @@ public sealed record class LanguageDtoWithId : LanguageDto, IDtoWithId<LanguageI
 
 	public LanguageDtoWithId()
 	{
-		
 	}
 
 	public LanguageDtoWithId(Language language, IMapper<LanguageId, Language, LanguageDto> mapper)

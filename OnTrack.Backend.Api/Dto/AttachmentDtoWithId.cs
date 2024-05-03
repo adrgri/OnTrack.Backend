@@ -9,7 +9,6 @@ public sealed record class AttachmentDtoWithId : AttachmentDto, IDtoWithId<Attac
 
 	public AttachmentDtoWithId()
 	{
-		
 	}
 
 	public AttachmentDtoWithId(Attachment attachment, IMapper<AttachmentId, Attachment, AttachmentDto> mapper)

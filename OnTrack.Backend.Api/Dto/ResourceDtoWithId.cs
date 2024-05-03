@@ -9,7 +9,6 @@ public sealed record class ResourceDtoWithId : ResourceDto, IDtoWithId<ResourceI
 
 	public ResourceDtoWithId()
 	{
-		
 	}
 
 	public ResourceDtoWithId(Resource resource, IMapper<ResourceId, Resource, ResourceDto> mapper)

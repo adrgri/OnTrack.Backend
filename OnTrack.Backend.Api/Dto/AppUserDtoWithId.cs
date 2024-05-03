@@ -9,7 +9,6 @@ public sealed record class AppUserDtoWithId : AppUserDto, IDtoWithId<IdentitySys
 
 	public AppUserDtoWithId()
 	{
-		
 	}
 
 	public AppUserDtoWithId(AppUser user, IMapper<IdentitySystemObjectId, AppUser, AppUserDto> mapper)

@@ -9,7 +9,6 @@ public sealed record class ProjectDtoWithId : ProjectDto, IDtoWithId<ProjectId>
 
 	public ProjectDtoWithId()
 	{
-
 	}
 
 	public ProjectDtoWithId(Project project, IMapper<ProjectId, Project, ProjectDto> mapper)

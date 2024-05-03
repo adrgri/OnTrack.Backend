@@ -9,7 +9,6 @@ public sealed record class IconDtoWithId : IconDto, IDtoWithId<IconId>
 
 	public IconDtoWithId()
 	{
-		
 	}
 
 	public IconDtoWithId(Icon icon, IMapper<IconId, Icon, IconDto> mapper)
