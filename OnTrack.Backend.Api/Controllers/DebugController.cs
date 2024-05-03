@@ -61,6 +61,7 @@ public sealed class DebugController(ILogger<DebugController> logger, IConfigurat
 	{
 		using IDisposable? _ = _logger.BeginScope(nameof(DownloadSqliteLogDatabase));
 
+		// TODO Przenieś ten klucz konfiguracyjny do klasy ConfigurationSectionKeys i ustaw dla niego walidację
 		string? sqliteDbPath = GetValue<string>(_configuration, "Serilog:WriteTo:0:Args:sqliteDbPath", _logger);
 
 		if (sqliteDbPath is null)

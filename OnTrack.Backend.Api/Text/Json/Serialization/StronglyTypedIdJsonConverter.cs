@@ -8,7 +8,7 @@ namespace OnTrack.Backend.Api.Text.Json.Serialization;
 public sealed class StronglyTypedIdJsonConverter<TStronglyTypedId> : JsonConverter<TStronglyTypedId>
 	where TStronglyTypedId : IStronglyTypedId, new()
 {
-	// TODO: A co jeśli reader.GetGuid() rzuci format exception?
+	// TODO: A co jeśli reader.GetGuid() rzuci format exception? Czy ASP obsłuży to automatycznie w jakiś sensowny sposób?
 	public override TStronglyTypedId? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 	{
 		return new TStronglyTypedId()

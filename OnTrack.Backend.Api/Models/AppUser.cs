@@ -7,6 +7,7 @@ using OnTrack.Backend.Api.Infrastructure.DataAccess;
 
 namespace OnTrack.Backend.Api.Models;
 
+// TODO Separate the identity from the user?
 [EntityTypeConfiguration<AppUserConfiguration, AppUser>]
 public sealed class AppUser : IdentityUser<IdentitySystemObjectId>, IEntity<IdentitySystemObjectId>
 {
