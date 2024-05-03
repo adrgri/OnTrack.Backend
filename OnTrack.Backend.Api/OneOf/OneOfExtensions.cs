@@ -4,10 +4,10 @@ namespace OnTrack.Backend.Api.OneOf;
 
 public static class OneOfExtensions
 {
-	public static void AssignIfSucceeded<TResult, TError>(this OneOf<TResult, TError> validationResult, Action<TResult> assigning)
+	public static void AssignIfSucceeded<TItem, TError>(this OneOf<TItem, TError> itemToAssignOrError, Action<TItem> assigner)
 	{
-		validationResult.Switch(
-			existingMilestone => assigning(existingMilestone),
+		itemToAssignOrError.Switch(
+			item => assigner(item),
 			_ => { });
 	}
 
