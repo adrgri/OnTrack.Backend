@@ -11,6 +11,9 @@ public sealed partial class AppUserMapper : StronglyTypedIdMapper<IdentitySystem
 	[UseMapper]
 	public static ProjectMapper ProjectMapper { get; } = new();
 
+	[UseMapper]
+	public static TaskMapper TaskMapper { get; } = new();
+
 	[MapperIgnoreTarget(nameof(AppUser.Id))]
 	[MapperIgnoreTarget(nameof(AppUser.NormalizedUserName))]
 	[MapperIgnoreTarget(nameof(AppUser.NormalizedEmail))]
@@ -18,6 +21,7 @@ public sealed partial class AppUserMapper : StronglyTypedIdMapper<IdentitySystem
 	[MapperIgnoreTarget(nameof(AppUser.SecurityStamp))]
 	[MapperIgnoreTarget(nameof(AppUser.ConcurrencyStamp))]
 	[MapProperty(nameof(AppUserDto.ProjectIds), nameof(AppUser.Projects))]
+	[MapProperty(nameof(AppUserDto.TaskIds), nameof(AppUser.Tasks))]
 	public override partial void ToExistingDomainModel(AppUserDto dto, AppUser entity);
 
 	[MapperIgnoreSource(nameof(AppUser.Id))]
@@ -27,6 +31,7 @@ public sealed partial class AppUserMapper : StronglyTypedIdMapper<IdentitySystem
 	[MapperIgnoreSource(nameof(AppUser.SecurityStamp))]
 	[MapperIgnoreSource(nameof(AppUser.ConcurrencyStamp))]
 	[MapProperty(nameof(AppUser.Projects), nameof(AppUserDto.ProjectIds))]
+	[MapProperty(nameof(AppUser.Tasks), nameof(AppUserDto.TaskIds))]
 	public override partial void ToExistingDto(AppUser entity, AppUserDto dto);
 
 	[MapperIgnoreTarget(nameof(AppUser.Id))]
@@ -36,6 +41,7 @@ public sealed partial class AppUserMapper : StronglyTypedIdMapper<IdentitySystem
 	[MapperIgnoreTarget(nameof(AppUser.SecurityStamp))]
 	[MapperIgnoreTarget(nameof(AppUser.ConcurrencyStamp))]
 	[MapProperty(nameof(AppUserDto.ProjectIds), nameof(AppUser.Projects))]
+	[MapProperty(nameof(AppUserDto.TaskIds), nameof(AppUser.Tasks))]
 	public override partial AppUser ToNewDomainModel(AppUserDto dto);
 
 	[MapperIgnoreSource(nameof(AppUser.Id))]
@@ -45,5 +51,6 @@ public sealed partial class AppUserMapper : StronglyTypedIdMapper<IdentitySystem
 	[MapperIgnoreSource(nameof(AppUser.SecurityStamp))]
 	[MapperIgnoreSource(nameof(AppUser.ConcurrencyStamp))]
 	[MapProperty(nameof(AppUser.Projects), nameof(AppUserDto.ProjectIds))]
+	[MapProperty(nameof(AppUser.Tasks), nameof(AppUserDto.TaskIds))]
 	public override partial AppUserDto ToNewDto(AppUser entity);
 }

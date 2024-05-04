@@ -37,6 +37,8 @@ public record class AppUserDto : IDto
 
 	public ICollection<ProjectId>? ProjectIds { get; set; }
 
+	public ICollection<TaskId>? TaskIds { get; set; }
+
 	[PersonalData]
 	public bool EmailConfirmed { get; set; }
 

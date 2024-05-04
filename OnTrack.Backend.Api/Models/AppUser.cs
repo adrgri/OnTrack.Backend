@@ -32,4 +32,6 @@ public sealed class AppUser : IdentityUser<IdentitySystemObjectId>, IEntity<Iden
 	//public PathString? ProfilePicturePath { get; set; }
 
 	public ICollection<Project>? Projects { get; set; }
+
+	public ICollection<Task>? Tasks { get; set; }
 }
