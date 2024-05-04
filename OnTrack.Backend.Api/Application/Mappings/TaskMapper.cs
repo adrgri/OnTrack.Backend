@@ -12,7 +12,13 @@ public sealed partial class TaskMapper : StronglyTypedIdMapper<TaskId, Task, Tas
 	public static ProjectMapper ProjectMapper { get; } = new();
 
 	[UseMapper]
+	public static StatusMapper StatusMapper { get; } = new();
+
+	[UseMapper]
 	public static IconMapper IconMapper { get; } = new();
+
+	[UseMapper]
+	public static AppUserMapper AppUserMapper { get; } = new();
 
 	[UseMapper]
 	public static ResourceMapper ResourceMapper { get; } = new();
@@ -22,7 +28,9 @@ public sealed partial class TaskMapper : StronglyTypedIdMapper<TaskId, Task, Tas
 
 	[MapperIgnoreTarget(nameof(Task.Id))]
 	[MapProperty(nameof(TaskDto.ProjectId), nameof(Task.Project))]
+	[MapProperty(nameof(TaskDto.StatusId), nameof(Task.Status))]
 	[MapProperty(nameof(TaskDto.IconId), nameof(Task.Icon))]
+	[MapProperty(nameof(TaskDto.AssignedMemberIds), nameof(Task.AssignedMembers))]
 	[MapProperty(nameof(TaskDto.AssignedResourceIds), nameof(Task.AssignedResources))]
 	[MapProperty(nameof(TaskDto.AttachmentIds), nameof(Task.Attachments))]
 	[MapProperty(nameof(TaskDto.SubtaskIds), nameof(Task.Subtasks))]
@@ -30,7 +38,9 @@ public sealed partial class TaskMapper : StronglyTypedIdMapper<TaskId, Task, Tas
 
 	[MapperIgnoreSource(nameof(Task.Id))]
 	[MapProperty(nameof(Task.Project), nameof(TaskDto.ProjectId))]
+	[MapProperty(nameof(Task.Status), nameof(TaskDto.StatusId))]
 	[MapProperty(nameof(Task.Icon), nameof(TaskDto.IconId))]
+	[MapProperty(nameof(Task.AssignedMembers), nameof(TaskDto.AssignedMemberIds))]
 	[MapProperty(nameof(Task.AssignedResources), nameof(TaskDto.AssignedResourceIds))]
 	[MapProperty(nameof(Task.Attachments), nameof(TaskDto.AttachmentIds))]
 	[MapProperty(nameof(Task.Subtasks), nameof(TaskDto.SubtaskIds))]
@@ -38,7 +48,9 @@ public sealed partial class TaskMapper : StronglyTypedIdMapper<TaskId, Task, Tas
 
 	[MapperIgnoreTarget(nameof(Task.Id))]
 	[MapProperty(nameof(TaskDto.ProjectId), nameof(Task.Project))]
+	[MapProperty(nameof(TaskDto.StatusId), nameof(Task.Status))]
 	[MapProperty(nameof(TaskDto.IconId), nameof(Task.Icon))]
+	[MapProperty(nameof(TaskDto.AssignedMemberIds), nameof(Task.AssignedMembers))]
 	[MapProperty(nameof(TaskDto.AssignedResourceIds), nameof(Task.AssignedResources))]
 	[MapProperty(nameof(TaskDto.AttachmentIds), nameof(Task.Attachments))]
 	[MapProperty(nameof(TaskDto.SubtaskIds), nameof(Task.Subtasks))]
@@ -46,7 +58,9 @@ public sealed partial class TaskMapper : StronglyTypedIdMapper<TaskId, Task, Tas
 
 	[MapperIgnoreSource(nameof(Task.Id))]
 	[MapProperty(nameof(Task.Project), nameof(TaskDto.ProjectId))]
+	[MapProperty(nameof(Task.Status), nameof(TaskDto.StatusId))]
 	[MapProperty(nameof(Task.Icon), nameof(TaskDto.IconId))]
+	[MapProperty(nameof(Task.AssignedMembers), nameof(TaskDto.AssignedMemberIds))]
 	[MapProperty(nameof(Task.AssignedResources), nameof(TaskDto.AssignedResourceIds))]
 	[MapProperty(nameof(Task.Attachments), nameof(TaskDto.AttachmentIds))]
 	[MapProperty(nameof(Task.Subtasks), nameof(TaskDto.SubtaskIds))]

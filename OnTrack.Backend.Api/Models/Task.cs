@@ -13,8 +13,10 @@ public sealed record class Task : Entity<TaskId>
 	public string? Description { get; set; }
 	public DateTime? StartDate { get; set; }
 	public DateTime? DueDate { get; set; }
+	public Status? Status { get; set; }
 	public Icon? Icon { get; set; }
 	public bool IsCompleted { get; set; }
+	public ICollection<AppUser>? AssignedMembers { get; set; }
 	public ICollection<Resource>? AssignedResources { get; set; }
 	public ICollection<Attachment>? Attachments { get; set; }
 	public ICollection<Task>? Subtasks { get; set; }

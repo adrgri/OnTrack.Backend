@@ -21,14 +21,18 @@ public sealed class TasksController(
 	IMapper<TaskId, Task, TaskDto> mapper,
 	IAsyncCollectionValidator<TaskId, OneOf<Task, EntityIdErrorsDescription<TaskId>>> tasksCollectionValidator,
 	IAsyncCollectionValidator<ProjectId, OneOf<Project, EntityIdErrorsDescription<ProjectId>>> projectExistenceValidator,
+	IAsyncCollectionValidator<StatusId, OneOf<Status, EntityIdErrorsDescription<StatusId>>> statusesExistenceValidator,
 	IAsyncCollectionValidator<IconId, OneOf<Icon, EntityIdErrorsDescription<IconId>>> iconsExistenceValidator,
+	IAsyncCollectionValidator<IdentitySystemObjectId, OneOf<AppUser, EntityIdErrorsDescription<IdentitySystemObjectId>>> appUserExistenceValidator,
 	IAsyncCollectionValidator<ResourceId, OneOf<Resource, EntityIdErrorsDescription<ResourceId>>> resourcesExistenceValidator,
 	IAsyncCollectionValidator<AttachmentId, OneOf<Attachment, EntityIdErrorsDescription<AttachmentId>>> attachmentsExistenceValidator)
 	: GenericController<TaskId, Task, TaskDto, TasksController>(logger, tasksAccessService, mapper, tasksCollectionValidator)
 {
 	// TODO: Move all of those to a Task validator, they are not needed here for anything else than validation
 	private readonly IAsyncCollectionValidator<ProjectId, OneOf<Project, EntityIdErrorsDescription<ProjectId>>> _projectExistenceValidator = projectExistenceValidator;
+	private readonly IAsyncCollectionValidator<StatusId, OneOf<Status, EntityIdErrorsDescription<StatusId>>> _statusesExistenceValidator = statusesExistenceValidator;
 	private readonly IAsyncCollectionValidator<IconId, OneOf<Icon, EntityIdErrorsDescription<IconId>>> _iconsExistenceValidator = iconsExistenceValidator;
+	private readonly IAsyncCollectionValidator<IdentitySystemObjectId, OneOf<AppUser, EntityIdErrorsDescription<IdentitySystemObjectId>>> _appUserExistenceValidator = appUserExistenceValidator;
 	private readonly IAsyncCollectionValidator<ResourceId, OneOf<Resource, EntityIdErrorsDescription<ResourceId>>> _resourcesExistenceValidator = resourcesExistenceValidator;
 	private readonly IAsyncCollectionValidator<AttachmentId, OneOf<Attachment, EntityIdErrorsDescription<AttachmentId>>> _attachmentsExistenceValidator = attachmentsExistenceValidator;
 
@@ -43,6 +47,7 @@ public sealed class TasksController(
 		// TODO: Check for duplicate subtasks: if any of the subtasks are repeated any number of times then it's a bad request,
 		//		 you can group by the subtask ids and then check if any of the groups have a count greater than 1
 
+		task.AssignedMembers = [];
 		task.AssignedResources = [];
 		task.Attachments = [];
 		task.Subtasks = [];
@@ -50,6 +55,13 @@ public sealed class TasksController(
 		OneOf<Project, NotFound> projectValidationResult = await ValidateEntityExistence(taskDto.ProjectId, _projectExistenceValidator);
 
 		projectValidationResult.AssignIfSucceeded(existingProject => task.Project = existingProject);
+
+		if (taskDto.StatusId is not null)
+		{
+			OneOf<Status, NotFound> iconValidationResult = await ValidateEntityExistence(taskDto.StatusId, _statusesExistenceValidator);
+
+			iconValidationResult.AssignIfSucceeded(existingStatus => task.Status = existingStatus);
+		}
 
 		if (taskDto.IconId is not null)
 		{
@@ -61,6 +73,11 @@ public sealed class TasksController(
 		if (taskDto.AssignedResourceIds is not null)
 		{
 			await ValidateEntitiesExistence(taskDto.AssignedResourceIds, task.AssignedResources, _resourcesExistenceValidator);
+		}
+
+		if (taskDto.AssignedMemberIds is not null)
+		{
+			await ValidateEntitiesExistence(taskDto.AssignedMemberIds, task.AssignedMembers, _appUserExistenceValidator);
 		}
 
 		if (taskDto.AttachmentIds is not null)

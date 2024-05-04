@@ -9,8 +9,10 @@ public record class TaskDto : IDto
 	public string? Description { get; set; }
 	public DateTime? StartDate { get; set; }
 	public DateTime? DueDate { get; set; }
+	public StatusId? StatusId { get; set; }
 	public IconId? IconId { get; set; }
 	public bool IsCompleted { get; set; }
+	public ICollection<IdentitySystemObjectId>? AssignedMemberIds { get; set; }
 	public ICollection<ResourceId>? AssignedResourceIds { get; set; }
 	public ICollection<AttachmentId>? AttachmentIds { get; set; }
 	public ICollection<TaskId>? SubtaskIds { get; set; }
