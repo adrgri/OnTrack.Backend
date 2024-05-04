@@ -12,13 +12,30 @@ public sealed class EfAppUsersAccessService<TDbContext>(TDbContext context)
 
 	public override SysTask Add(AppUser entity, CancellationToken cancellationToken)
 	{
-		throw new NotSupportedException(string.Format(_template, "register new"));
+		throw new NotSupportedException(string.Format(_template, "register a new"));
+	}
+
+	public override Task<AppUser?> Find(IdentitySystemObjectId id, CancellationToken cancellationToken)
+	{
+		return Query(cancellationToken)
+			.Include(appUser => appUser.Projects)
+			.Include(appUser => appUser.Tasks)
+			.Where(appUser => appUser.Id == id)
+			.FirstOrDefaultAsync(cancellationToken);
+	}
+
+	public override async Task<IEnumerable<AppUser>> GetAll(CancellationToken cancellationToken)
+	{
+		return await Query(cancellationToken)
+			.Include(appUser => appUser.Projects)
+			.Include(appUser => appUser.Tasks)
+			.ToListAsync(cancellationToken);
 	}
 
 	public override SysTask Remove(AppUser entity, CancellationToken cancellationToken)
 	{
 		// TODO: Implement endpoint to remove a user from the identity system
 		throw new NotImplementedException();
-		throw new NotSupportedException(string.Format(_template, "remove existing"));
+		throw new NotSupportedException(string.Format(_template, "remove an existing"));
 	}
 }
