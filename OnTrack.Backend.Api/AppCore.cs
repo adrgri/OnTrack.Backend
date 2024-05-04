@@ -1,8 +1,4 @@
-﻿#pragma warning disable IDE0079 // Remove unnecessary suppression
-#pragma warning disable IDE0058 // Expression value is never used
-#pragma warning disable IDE0061 // Use expression body for local function
-
-namespace OnTrack.Backend.Api;
+﻿namespace OnTrack.Backend.Api;
 
 internal static class AppCore
 {
