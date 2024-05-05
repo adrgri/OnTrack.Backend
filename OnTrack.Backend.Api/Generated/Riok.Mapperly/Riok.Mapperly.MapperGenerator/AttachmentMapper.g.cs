@@ -4,19 +4,19 @@ namespace OnTrack.Backend.Api.Application.Mappings
 {
     public sealed partial class AttachmentMapper
     {
-        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
         public override partial void ToExistingDomainModel(global::OnTrack.Backend.Api.Dto.AttachmentDto dto, global::OnTrack.Backend.Api.Models.Attachment entity)
         {
             entity.DisplayName = dto.DisplayName;
         }
 
-        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
         public override partial void ToExistingDto(global::OnTrack.Backend.Api.Models.Attachment entity, global::OnTrack.Backend.Api.Dto.AttachmentDto dto)
         {
             dto.DisplayName = entity.DisplayName;
         }
 
-        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
         public override partial global::OnTrack.Backend.Api.Models.Attachment ToNewDomainModel(global::OnTrack.Backend.Api.Dto.AttachmentDto dto)
         {
             var target = new global::OnTrack.Backend.Api.Models.Attachment();
@@ -24,7 +24,7 @@ namespace OnTrack.Backend.Api.Application.Mappings
             return target;
         }
 
-        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
         public override partial global::OnTrack.Backend.Api.Dto.AttachmentDto ToNewDto(global::OnTrack.Backend.Api.Models.Attachment entity)
         {
             var target = new global::OnTrack.Backend.Api.Dto.AttachmentDto();

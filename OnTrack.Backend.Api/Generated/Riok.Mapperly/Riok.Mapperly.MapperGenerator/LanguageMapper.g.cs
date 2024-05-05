@@ -4,21 +4,21 @@ namespace OnTrack.Backend.Api.Application.Mappings
 {
     public sealed partial class LanguageMapper
     {
-        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
         public override partial void ToExistingDomainModel(global::OnTrack.Backend.Api.Dto.LanguageDto dto, global::OnTrack.Backend.Api.Models.Language entity)
         {
             entity.Code = dto.Code;
             entity.Name = dto.Name;
         }
 
-        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
         public override partial void ToExistingDto(global::OnTrack.Backend.Api.Models.Language entity, global::OnTrack.Backend.Api.Dto.LanguageDto dto)
         {
             dto.Code = entity.Code;
             dto.Name = entity.Name;
         }
 
-        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
         public override partial global::OnTrack.Backend.Api.Models.Language ToNewDomainModel(global::OnTrack.Backend.Api.Dto.LanguageDto dto)
         {
             var target = new global::OnTrack.Backend.Api.Models.Language();
@@ -27,7 +27,7 @@ namespace OnTrack.Backend.Api.Application.Mappings
             return target;
         }
 
-        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
         public override partial global::OnTrack.Backend.Api.Dto.LanguageDto ToNewDto(global::OnTrack.Backend.Api.Models.Language entity)
         {
             var target = new global::OnTrack.Backend.Api.Dto.LanguageDto();

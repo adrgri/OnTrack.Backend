@@ -4,12 +4,12 @@ namespace OnTrack.Backend.Api.Application.Mappings
 {
     public sealed partial class ProjectMapper
     {
-        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
         public override partial void ToExistingDomainModel(global::OnTrack.Backend.Api.Dto.ProjectDto dto, global::OnTrack.Backend.Api.Models.Project entity)
         {
             if (dto.TaskIds != null)
             {
-                entity.Tasks = MapToList1(dto.TaskIds);
+                entity.Tasks = MapToListOfTask(dto.TaskIds);
             }
             else
             {
@@ -17,15 +17,15 @@ namespace OnTrack.Backend.Api.Application.Mappings
             }
             entity.Title = dto.Title;
             entity.Description = dto.Description;
-            entity.Members = MapToList(dto.MemberIds);
+            entity.Members = MapToListOfAppUser(dto.MemberIds);
         }
 
-        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
         public override partial void ToExistingDto(global::OnTrack.Backend.Api.Models.Project entity, global::OnTrack.Backend.Api.Dto.ProjectDto dto)
         {
             if (entity.Tasks != null)
             {
-                dto.TaskIds = MapToList3(entity.Tasks);
+                dto.TaskIds = MapToListOfTaskId(entity.Tasks);
             }
             else
             {
@@ -33,16 +33,16 @@ namespace OnTrack.Backend.Api.Application.Mappings
             }
             dto.Title = entity.Title;
             dto.Description = entity.Description;
-            dto.MemberIds = MapToList2(entity.Members);
+            dto.MemberIds = MapToListOfIdentitySystemObjectId(entity.Members);
         }
 
-        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
         public override partial global::OnTrack.Backend.Api.Models.Project ToNewDomainModel(global::OnTrack.Backend.Api.Dto.ProjectDto dto)
         {
             var target = new global::OnTrack.Backend.Api.Models.Project();
             if (dto.TaskIds != null)
             {
-                target.Tasks = MapToList1(dto.TaskIds);
+                target.Tasks = MapToListOfTask(dto.TaskIds);
             }
             else
             {
@@ -50,17 +50,17 @@ namespace OnTrack.Backend.Api.Application.Mappings
             }
             target.Title = dto.Title;
             target.Description = dto.Description;
-            target.Members = MapToList(dto.MemberIds);
+            target.Members = MapToListOfAppUser(dto.MemberIds);
             return target;
         }
 
-        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
         public override partial global::OnTrack.Backend.Api.Dto.ProjectDto ToNewDto(global::OnTrack.Backend.Api.Models.Project entity)
         {
             var target = new global::OnTrack.Backend.Api.Dto.ProjectDto();
             if (entity.Tasks != null)
             {
-                target.TaskIds = MapToList3(entity.Tasks);
+                target.TaskIds = MapToListOfTaskId(entity.Tasks);
             }
             else
             {
@@ -68,12 +68,12 @@ namespace OnTrack.Backend.Api.Application.Mappings
             }
             target.Title = entity.Title;
             target.Description = entity.Description;
-            target.MemberIds = MapToList2(entity.Members);
+            target.MemberIds = MapToListOfIdentitySystemObjectId(entity.Members);
             return target;
         }
 
-        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
-        private global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.AppUser> MapToList(global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.IdentitySystemObjectId> source)
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
+        private global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.AppUser> MapToListOfAppUser(global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.IdentitySystemObjectId> source)
         {
             var target = new global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.AppUser>(source.Count);
             foreach (var item in source)
@@ -83,8 +83,8 @@ namespace OnTrack.Backend.Api.Application.Mappings
             return target;
         }
 
-        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
-        private global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.Task> MapToList1(global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.TaskId> source)
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
+        private global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.Task> MapToListOfTask(global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.TaskId> source)
         {
             var target = new global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.Task>(source.Count);
             foreach (var item in source)
@@ -94,8 +94,8 @@ namespace OnTrack.Backend.Api.Application.Mappings
             return target;
         }
 
-        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
-        private global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.IdentitySystemObjectId> MapToList2(global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.AppUser> source)
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
+        private global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.IdentitySystemObjectId> MapToListOfIdentitySystemObjectId(global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.AppUser> source)
         {
             var target = new global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.IdentitySystemObjectId>(source.Count);
             foreach (var item in source)
@@ -105,8 +105,8 @@ namespace OnTrack.Backend.Api.Application.Mappings
             return target;
         }
 
-        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
-        private global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.TaskId> MapToList3(global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.Task> source)
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
+        private global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.TaskId> MapToListOfTaskId(global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.Task> source)
         {
             var target = new global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.TaskId>(source.Count);
             foreach (var item in source)

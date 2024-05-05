@@ -4,7 +4,7 @@ namespace OnTrack.Backend.Api.Application.Mappings
 {
     public sealed partial class ResourceMapper
     {
-        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
         public override partial void ToExistingDomainModel(global::OnTrack.Backend.Api.Dto.ResourceDto dto, global::OnTrack.Backend.Api.Models.Resource entity)
         {
             entity.Name = dto.Name;
@@ -13,7 +13,7 @@ namespace OnTrack.Backend.Api.Application.Mappings
             entity.Unit = dto.Unit;
         }
 
-        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
         public override partial void ToExistingDto(global::OnTrack.Backend.Api.Models.Resource entity, global::OnTrack.Backend.Api.Dto.ResourceDto dto)
         {
             dto.Name = entity.Name;
@@ -22,7 +22,7 @@ namespace OnTrack.Backend.Api.Application.Mappings
             dto.Unit = entity.Unit;
         }
 
-        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
         public override partial global::OnTrack.Backend.Api.Models.Resource ToNewDomainModel(global::OnTrack.Backend.Api.Dto.ResourceDto dto)
         {
             var target = new global::OnTrack.Backend.Api.Models.Resource();
@@ -33,7 +33,7 @@ namespace OnTrack.Backend.Api.Application.Mappings
             return target;
         }
 
-        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.4.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
         public override partial global::OnTrack.Backend.Api.Dto.ResourceDto ToNewDto(global::OnTrack.Backend.Api.Models.Resource entity)
         {
             var target = new global::OnTrack.Backend.Api.Dto.ResourceDto();
