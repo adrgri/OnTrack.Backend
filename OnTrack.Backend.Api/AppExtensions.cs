@@ -263,7 +263,8 @@ internal static class AppExtensions
 			{
 				ConnectionsConfiguration connectionsConfiguration = GetConnectionsConfiguration(builder, logger);
 
-				options.UseSqlServer(connectionsConfiguration.SqlDatabase);
+				options.UseSqlServer(connectionsConfiguration.SqlDatabase,
+					   options => options.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
 
 				if (builder.Environment.IsProduction() == false)
 				{
