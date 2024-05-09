@@ -25,6 +25,7 @@ public interface IEntityAccessService<in TEntityId, TEntity>
 		return Exists(id, CancellationToken.None);
 	}
 
+	// TODO: Zamień to na IAsyncEnumerable<TEntity>
 	Task<IEnumerable<TEntity>> GetAll(CancellationToken cancellationToken);
 	Task<IEnumerable<TEntity>> GetAll()
 	{

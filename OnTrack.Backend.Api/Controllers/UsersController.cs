@@ -92,6 +92,7 @@ public class UsersController(
 			(Error _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 
+	//// TODO: Dodaj nowy DTO dla tego endpointa z możliwością zmiany danych użytkownika, które nie są częścią systemu tożsamościowego
 	//[HttpPut]
 	//[Authorize]
 	//[ProducesResponseType(StatusCodes.Status200OK)]
