@@ -158,7 +158,7 @@ public abstract class GenericController<TEntityId, TEntity, TDto, TController>(
 	}
 
 	protected async SysTask ValidateEntitiesExistence<TArbitraryEntity, TArbitraryEntityId>(
-		ICollection<TArbitraryEntityId> entityIdsToValidate,
+		IEnumerable<TArbitraryEntityId> entityIdsToValidate,
 		ICollection<TArbitraryEntity> existingEntities,
 		IAsyncCollectionValidator<TArbitraryEntityId, OneOf<TArbitraryEntity, EntityIdErrorsDescription<TArbitraryEntityId>>> entitiesExistenceValidator)
 		where TArbitraryEntity : IEntity<TArbitraryEntityId>
