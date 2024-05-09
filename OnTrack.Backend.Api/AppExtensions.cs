@@ -17,6 +17,7 @@ using OnTrack.Backend.Api.Application.Mappings;
 using OnTrack.Backend.Api.Configuration;
 using OnTrack.Backend.Api.DataAccess;
 using OnTrack.Backend.Api.Dto;
+using OnTrack.Backend.Api.Infrastructure.ModelBinding;
 using OnTrack.Backend.Api.Models;
 using OnTrack.Backend.Api.Services;
 using OnTrack.Backend.Api.Validation;
@@ -292,7 +293,8 @@ internal static class AppExtensions
 			builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddSwaggerGen(options => MapAllStronglyTypedIdsAsUuids(options));
 
-			builder.Services.AddControllers().AddJsonOptions(options => AddStronglyTypedIdJsonConverters(options, logger));
+			builder.Services.AddControllers(options => options.ModelBinderProviders.Insert(0, new CommaSeparatedArrayModelBinderProvider()))
+				.AddJsonOptions(options => AddStronglyTypedIdJsonConverters(options, logger));
 
 			builder.Services.AddApplicationInsightsTelemetry();
 		}, "Services", logger);
