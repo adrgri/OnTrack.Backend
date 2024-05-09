@@ -242,6 +242,38 @@ public abstract class GenericController<TEntityId, TEntity, TDto, TController>(
 		}
 	}
 
+	protected async Task<OneOf<List<TEntity>, ValidationFailure, Conflict, Canceled, UnexpectedException>> GetMany(IEnumerable<TEntityId> entityIds, CancellationToken cancellationToken)
+	{
+		try
+		{
+			List<TEntity> entities = [];
+
+			await ValidateEntitiesExistence(entityIds, entities, EntityCollectionValidator);
+
+			cancellationToken.ThrowIfCancellationRequested();
+
+			return ModelState.IsValid ? entities : new ValidationFailure();
+		}
+		catch (OperationCanceledException ex)
+		{
+			LogOperationCanceledException(ex, "get many");
+
+			return new Canceled();
+		}
+		catch (DbUpdateConcurrencyException ex)
+		{
+			LogConcurrencyException(ex, "get many");
+
+			return new Conflict();
+		}
+		catch (Exception ex)
+		{
+			LogUnexpectedException(ex, "get many");
+
+			return new UnexpectedException();
+		}
+	}
+
 	protected async Task<OneOf<List<TEntity>, Canceled, UnexpectedException>> GetAll(CancellationToken cancellationToken)
 	{
 		try
