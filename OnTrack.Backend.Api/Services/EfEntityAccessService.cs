@@ -71,8 +71,7 @@ public class EfEntityAccessService<TEntityId, TEntity, TDbContext>(TDbContext co
 	{
 		cancellationToken.ThrowIfCancellationRequested();
 
-		return Context.Set<TEntity>()
-			.AsQueryable();
+		return Context.Set<TEntity>().AsQueryable();
 	}
 
 	public virtual async SysTask SaveChanges(CancellationToken cancellationToken)

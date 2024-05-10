@@ -2,6 +2,7 @@
 
 namespace OnTrack.Backend.Api.Dto;
 
+// TODO: Zmień nazwę Taska na Todo?
 public record class TaskDto : IDto
 {
 	public ProjectId ProjectId { get; set; }
