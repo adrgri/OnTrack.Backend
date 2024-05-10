@@ -2,7 +2,7 @@
 
 internal static class AppCore
 {
-	public static void ConfigurationWrapper(Action configurationAction, string configurationName, ILogger<Program> logger)
+	public static void ConfigurationWrapper(Action configurationAction, string configurationName, ILogger logger)
 	{
 		using IDisposable? _ = logger.BeginScope(configurationName);
 

@@ -28,6 +28,8 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 
 using static OnTrack.Backend.Api.AppCore;
 
+using ILogger = Microsoft.Extensions.Logging.ILogger;
+
 namespace OnTrack.Backend.Api;
 
 internal static class AppExtensions
@@ -37,7 +39,7 @@ internal static class AppExtensions
 		builder.Configuration.AddEnvironmentVariables();
 	}
 
-	public static ILogger<Program> ConfigureLogger(this WebApplicationBuilder builder)
+	public static ILogger<TCategoryName> ConfigureLogger<TCategoryName>(this WebApplicationBuilder builder)
 	{
 		builder.Logging.ClearProviders();
 
@@ -45,11 +47,15 @@ internal static class AppExtensions
 			.ReadFrom.Configuration(builder.Configuration)
 			.CreateLogger();
 
+#if DEBUG
+		Serilog.Debugging.SelfLog.Enable(Log.Logger.Debug);
+#endif
+
 		builder.Host.UseSerilog(Log.Logger, dispose: true);
 
-		ILogger<Program> logger = new LoggerFactory()
+		ILogger<TCategoryName> logger = new LoggerFactory()
 			.AddSerilog(Log.Logger)
-			.CreateLogger<Program>();
+			.CreateLogger<TCategoryName>();
 
 		logger.LogInformation("{ConfigurationName} configured.", "Logger");
 
@@ -64,7 +70,7 @@ internal static class AppExtensions
 			.ValidateOnStart();
 	}
 
-	public static void ConfigureOptions(this WebApplicationBuilder builder, ILogger<Program> logger)
+	public static void ConfigureOptions(this WebApplicationBuilder builder, ILogger logger)
 	{
 		IDictionary<string, Action> optionsToConfigure = new Dictionary<string, Action>()
 		{
@@ -81,7 +87,7 @@ internal static class AppExtensions
 		}, "Options", logger);
 	}
 
-	private static void ConfigureCors(this WebApplicationBuilder builder, ILogger<Program> logger)
+	private static void ConfigureCors(this WebApplicationBuilder builder, ILogger logger)
 	{
 		logger.LogInformation("Configuring {ConfigurationName}...", "Default CORS policy");
 
@@ -176,7 +182,7 @@ internal static class AppExtensions
 		// Avoided unnecessary Cast<TAttribute>() by using null-forgiving operator since the collection will not contain any nulls
 	}
 
-	private static Type ExtractJsonConverterType(JsonConverterAttribute jsonConverterAttribute, ILogger<Program> logger)
+	private static Type ExtractJsonConverterType(JsonConverterAttribute jsonConverterAttribute, ILogger logger)
 	{
 		Type? converterType = jsonConverterAttribute.ConverterType;
 
@@ -194,7 +200,7 @@ internal static class AppExtensions
 		return converterType;
 	}
 
-	private static JsonConverter InstantiateJsonConverter(Type jsonConverterType, ILogger<Program> logger)
+	private static JsonConverter InstantiateJsonConverter(Type jsonConverterType, ILogger logger)
 	{
 		try
 		{
@@ -214,7 +220,7 @@ internal static class AppExtensions
 		}
 	}
 
-	private static void AddStronglyTypedIdJsonConverters(JsonOptions options, ILogger<Program> logger)
+	private static void AddStronglyTypedIdJsonConverters(JsonOptions options, ILogger logger)
 	{
 		IEnumerable<JsonConverter> jsonConverters = SearchAssemblyForJsonConverterAttributes<JsonConverterAttribute>()
 			.Select(jsonConverterAttribute => ExtractJsonConverterType(jsonConverterAttribute, logger))
@@ -228,7 +234,7 @@ internal static class AppExtensions
 		}
 	}
 
-	private static ConnectionsConfiguration GetConnectionsConfiguration(WebApplicationBuilder builder, ILogger<Program> logger)
+	private static ConnectionsConfiguration GetConnectionsConfiguration(WebApplicationBuilder builder, ILogger logger)
 	{
 		logger.LogInformation("Retrieving {ConfigurationName}...", "Connections configuration");
 
@@ -254,7 +260,7 @@ internal static class AppExtensions
 	/// <summary>
 	/// Adds services to the container
 	/// </summary>
-	public static void ConfigureServices(this WebApplicationBuilder builder, ILogger<Program> logger)
+	public static void ConfigureServices(this WebApplicationBuilder builder, ILogger logger)
 	{
 		ConfigurationWrapper(() =>
 		{
@@ -300,7 +306,7 @@ internal static class AppExtensions
 		}, "Services", logger);
 	}
 
-	private static void ConfigureEmailServices(WebApplicationBuilder builder, ILogger<Program> logger)
+	private static void ConfigureEmailServices(WebApplicationBuilder builder, ILogger logger)
 	{
 		ConfigurationWrapper(() =>
 		{
@@ -315,7 +321,7 @@ internal static class AppExtensions
 		}, "Email services", logger);
 	}
 
-	private static void ConfigureDataAccessServices(WebApplicationBuilder builder, ILogger<Program> logger)
+	private static void ConfigureDataAccessServices(WebApplicationBuilder builder, ILogger logger)
 	{
 		ConfigurationWrapper(() =>
 		{
@@ -330,7 +336,7 @@ internal static class AppExtensions
 		}, "Data access services", logger);
 	}
 
-	private static void ConfigureModelMappings(WebApplicationBuilder builder, ILogger<Program> logger)
+	private static void ConfigureModelMappings(WebApplicationBuilder builder, ILogger logger)
 	{
 		ConfigurationWrapper(() =>
 		{
@@ -346,7 +352,7 @@ internal static class AppExtensions
 		}, "Model mappers", logger);
 	}
 
-	private static void ConfigureValidators(WebApplicationBuilder builder, ILogger<Program> logger)
+	private static void ConfigureValidators(WebApplicationBuilder builder, ILogger logger)
 	{
 		ConfigurationWrapper(() =>
 		{
@@ -361,7 +367,7 @@ internal static class AppExtensions
 		}, "Validators", logger);
 	}
 
-	public static void ConfigureDependencies(this WebApplicationBuilder builder, ILogger<Program> logger)
+	public static void ConfigureDependencies(this WebApplicationBuilder builder, ILogger logger)
 	{
 		ConfigurationWrapper(() =>
 		{
@@ -372,12 +378,12 @@ internal static class AppExtensions
 		}, "Dependencies", logger);
 	}
 
-	public static void ConfigureWebHost(this WebApplicationBuilder builder, ILogger<Program> logger)
+	public static void ConfigureWebHost(this WebApplicationBuilder builder, ILogger logger)
 	{
 		ConfigurationWrapper(() => builder.WebHost.UseQuic(), nameof(builder.WebHost), logger);
 	}
 
-	public static WebApplication BuildApplication(this WebApplicationBuilder builder, ILogger<Program> logger)
+	public static WebApplication BuildApplication(this WebApplicationBuilder builder, ILogger logger)
 	{
 		WebApplication app;
 
@@ -409,7 +415,7 @@ internal static class AppExtensions
 	/// <remarks>
 	/// Order is important when configuring the pipeline!
 	/// </remarks>
-	public static void ConfigureRequestPipeline(this WebApplication app, ILogger<Program> logger)
+	public static void ConfigureRequestPipeline(this WebApplication app, ILogger logger)
 	{
 		ConfigurationWrapper(() =>
 		{
@@ -447,7 +453,7 @@ internal static class AppExtensions
 		}, "Pipeline", logger);
 	}
 
-	private static void LogSmtpConfiguration(WebApplication app, ILogger<Program> logger)
+	private static void LogSmtpConfiguration(WebApplication app, ILogger logger)
 	{
 		SmtpEmailServicesOptions smtpEmailServicesOptions = app.Services.GetRequiredService<IOptions<SmtpEmailServicesOptions>>().Value;
 
@@ -460,7 +466,7 @@ internal static class AppExtensions
 	}
 
 	// TODO Zmień nazwę tej metody na jakąś inną, w zależności od tego, co ona będzie robiła w przyszłości
-	public static void SanityCheck(this WebApplication app, ILogger<Program> logger)
+	public static void SanityCheck(this WebApplication app, ILogger logger)
 	{
 		logger.LogInformation("Performing sanity checks...");
 
@@ -478,7 +484,7 @@ internal static class AppExtensions
 	/// <summary>
 	/// <inheritdoc cref="WebApplication.RunAsync(string)"/>
 	/// </summary>
-	public static async SysTask RunAsync(this WebApplication app, ILogger<Program> logger)
+	public static async SysTask RunAsync(this WebApplication app, ILogger logger)
 	{
 		//ConfigurationCore(() =>
 		//{
