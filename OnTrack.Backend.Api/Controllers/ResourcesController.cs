@@ -1,109 +1,112 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
+using OneOf;
+using OneOf.Types;
+
 using OnTrack.Backend.Api.Application.Mappings;
+using OnTrack.Backend.Api.DataAccess;
 using OnTrack.Backend.Api.Dto;
 using OnTrack.Backend.Api.Models;
 using OnTrack.Backend.Api.Services;
+using OnTrack.Backend.Api.Threading;
+using OnTrack.Backend.Api.Validation;
 
 namespace OnTrack.Backend.Api.Controllers;
 
 [ApiController, Route("/api/resource")]
-public sealed class ResourcesController(IEntityAccessService<ResourceId, Resource> resourcesService, ILogger<StatusesController> logger)
-	: ControllerBase
+public sealed class ResourcesController(
+	ILogger<ResourcesController> logger,
+	IEntityAccessService<ResourceId, Resource> resourcesService,
+	IMapper<ResourceId, Resource, ResourceDto> mapper,
+	IAsyncCollectionValidator<ResourceId, OneOf<Resource, EntityIdErrorsDescription<ResourceId>>> resourceExistenceValidator)
+	: GenericController<ResourceId, Resource, ResourceDto, ResourcesController>(logger, resourcesService, mapper, resourceExistenceValidator)
 {
-	private readonly IEntityAccessService<ResourceId, Resource> _resourcesService = resourcesService;
-	private readonly ILogger<StatusesController> _logger = logger;
+	protected override Task<OneOf<Resource, ValidationFailure>> ConvertToNewDomainModel(ResourceDto entityDto)
+	{
+		Resource resource = Mapper.ToNewDomainModel(entityDto);
+
+		OneOf<Resource, ValidationFailure> output = ModelState.IsValid ? resource : new ValidationFailure();
+
+		return SysTask.FromResult(output);
+	}
+
+	protected override async Task<OneOf<Resource, NotFound, ValidationFailure>> ConvertToNewDomainModel(ResourceId entityId, ResourceDto entityDto)
+	{
+		return (await ValidateEntityExistence(entityId, EntityCollectionValidator)).Match(resource =>
+		{
+			Mapper.ToExistingDomainModel(entityDto, resource);
+
+			return (OneOf<Resource, NotFound, ValidationFailure>)(ModelState.IsValid ? resource : new ValidationFailure());
+		},
+		(NotFound notFound) => notFound);
+	}
 
 	[HttpPost]
 	[ProducesResponseType(StatusCodes.Status201Created)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
-	public async Task<ActionResult<Resource>> PostResource(ResourceDto createResourceDto, [FromServices] IMapper<ResourceId, Resource, ResourceDto> mapper)
+	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<ActionResult<ResourceDtoWithId>> PostResource(ResourceDto resourceDto, CancellationToken cancellationToken)
 	{
-		Resource resource = mapper.ToNewDomainModel(createResourceDto);
-
-		await _resourcesService.Add(resource);
-		await _resourcesService.SaveChanges();
-
-		return CreatedAtAction(nameof(GetResource), new { resourceId = resource.Id }, resource);
+		return (await Post(resourceDto, cancellationToken)).Match<ActionResult<ResourceDtoWithId>>(
+			(Resource resource) => CreatedAtAction(nameof(GetResources), new List<object>() { new { resourceId = resource.Id } }, new ResourceDtoWithId(resource, Mapper)),
+			(ValidationFailure _) => ValidationProblem(ModelState),
+			(Conflict _) => Conflict(),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 
-	[HttpGet("{resourceId}")]
+	[HttpGet("{resourceIds}")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
-	public async Task<ActionResult<Resource>> GetResource(ResourceId resourceId)
+	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<ActionResult<IEnumerable<ResourceDtoWithId>>> GetResources([FromRoute] ResourceId[] resourceIds, CancellationToken cancellationToken)
 	{
-		Resource? resource = await _resourcesService.Find(resourceId);
-
-		return resource switch
-		{
-			null => NotFound(),
-			_ => resource
-		};
+		return (await GetMany(resourceIds, cancellationToken)).Match<ActionResult<IEnumerable<ResourceDtoWithId>>>(
+			(List<Resource> resourcesList) => resourcesList.ConvertAll(resource => new ResourceDtoWithId(resource, Mapper)),
+			(ValidationFailure _) => ValidationProblem(ModelState),
+			(Conflict _) => Conflict(),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 
 	[HttpGet]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	public async Task<ActionResult<IEnumerable<Resource>>> GetResources()
+	[ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<ActionResult<IEnumerable<ResourceDtoWithId>>> GetResources(CancellationToken cancellationToken)
 	{
-		IEnumerable<Resource> resources = await _resourcesService.GetAll();
-
-		return resources.ToList();
+		return (await GetAll(cancellationToken)).Match<ActionResult<IEnumerable<ResourceDtoWithId>>>(
+			(List<Resource> resourcesList) => resourcesList.ConvertAll(resource => new ResourceDtoWithId(resource, Mapper)),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 
 	[HttpPut]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
-	public async Task<IActionResult> PutResource(ResourceId resourceId, ResourceDto resourceDto, [FromServices] IMapper<ResourceId, Resource, ResourceDto> mapper)
+	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<IActionResult> PutResource(ResourceDtoWithId resourceDtoWithId, CancellationToken cancellationToken)
 	{
-		Resource? resource = await _resourcesService.Find(resourceId);
-
-		if (resource is null)
-		{
-			return NotFound();
-		}
-
-		mapper.ToExistingDomainModel(resourceDto, resource);
-
-		await _resourcesService.Update(resource);
-
-		try
-		{
-			await _resourcesService.SaveChanges();
-		}
-		catch (DbUpdateConcurrencyException)
-		{
-			return NotFound();
-		}
-
-		return Ok();
+		return (await Put(resourceDtoWithId.Id, resourceDtoWithId, cancellationToken)).Match(
+			(Resource _) => Ok(),
+			(NotFound _) => NotFound(),
+			(ValidationFailure _) => ValidationProblem(ModelState),
+			(Conflict _) => Conflict(),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 
 	[HttpDelete("{resourceId}")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound), ProducesResponseType(StatusCodes.Status409Conflict)]
-	public async Task<IActionResult> DeleteResource(ResourceId resourceId)
+	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
+	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<IActionResult> DeleteResource(ResourceId resourceId, CancellationToken cancellationToken)
 	{
-		Resource? resource = await _resourcesService.Find(resourceId);
-
-		if (resource is null)
-		{
-			return NotFound();
-		}
-
-		await _resourcesService.Remove(resource);
-
-		try
-		{
-			await _resourcesService.SaveChanges();
-
-			return Ok();
-		}
-		catch (DbUpdateConcurrencyException ex)
-		{
-			_logger.LogError(ex, "Concurrency exception occurred while trying to delete the resource with id {ResourceId}.", resourceId);
-
-			return Conflict();
-		}
+		return (await Delete(resourceId, cancellationToken)).Match(
+			(Success _) => Ok(),
+			(NotFound _) => NotFound(),
+			(Conflict _) => Conflict(),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 }

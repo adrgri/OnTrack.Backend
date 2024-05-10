@@ -9,9 +9,11 @@ using OneOf;
 using OneOf.Types;
 
 using OnTrack.Backend.Api.Application.Mappings;
+using OnTrack.Backend.Api.DataAccess;
 using OnTrack.Backend.Api.Dto;
 using OnTrack.Backend.Api.Models;
 using OnTrack.Backend.Api.Services;
+using OnTrack.Backend.Api.Threading;
 using OnTrack.Backend.Api.Validation;
 
 namespace OnTrack.Backend.Api.Controllers;
@@ -49,6 +51,32 @@ public class UsersController(
 		(NotFound notFound) => notFound);
 	}
 
+	[HttpGet("{userIds}")]
+	[ProducesResponseType(StatusCodes.Status200OK)]
+	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
+	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<ActionResult<IEnumerable<AppUserDtoSlim>>> GetUsers([FromRoute] IdentitySystemObjectId[] userIds, [FromServices] IMapper<IdentitySystemObjectId, AppUser, AppUserDtoSlim> mapper, CancellationToken cancellationToken)
+	{
+		// TODO: Dodaj tutaj jakiś max limit na ilość Id, żeby nie otworzyć API na potencjalny atak DDOS
+
+		// TODO: Może to będzie lepszy pomysł?
+		//IQueryable<AppUserDtoSlim> query = EntityAccessService.Query(cancellationToken)
+		//	.Select(user => new AppUserDtoSlim() { Id = user.Id, FirstName = user.FirstName, LastName = user.LastName, Bio = user.Bio })
+		//	.Where(user => userIds.Contains(user.Id));
+
+		//foreach (AppUserDtoSlim dtoSlim in query)
+		//{
+		//	// Walidacja
+		//}
+
+		return (await GetMany(userIds, cancellationToken)).Match<ActionResult<IEnumerable<AppUserDtoSlim>>>(
+			(List<AppUser> usersList) => usersList.ConvertAll(user => new AppUserDtoSlim(user, mapper)),
+			(ValidationFailure _) => ValidationProblem(ModelState),
+			(Conflict _) => Conflict(),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
+	}
+
 	// TODO: W zamian za to Query poniżej utwórz interfejsy do zarządzania poszczególnymi entities np "IAppUsersAccessService" i dodaj do niego metodę GetByEmail i inne, które będą potrzebne,
 	// to samo zrób dla reszty entities
 	[HttpGet("byEmail/{email}")]
@@ -81,11 +109,11 @@ public class UsersController(
 		return authorizedUser;
 	}
 
-	[HttpGet]
+	[HttpGet("me")]
 	[Authorize]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status401Unauthorized)]
-	public async Task<ActionResult<AppUserDtoWithId>> GetUser()
+	public async Task<ActionResult<AppUserDtoWithId>> GetAuthorizedUserInformation()
 	{
 		return (await GetAuthorizedUser()).Match<ActionResult<AppUserDtoWithId>>(
 			authorizedUser => new AppUserDtoWithId(authorizedUser, Mapper),

@@ -335,6 +335,7 @@ internal static class AppExtensions
 		ConfigurationWrapper(() =>
 		{
 			builder.Services.AddSingleton<IMapper<IdentitySystemObjectId, AppUser, AppUserDto>, AppUserMapper>();
+			builder.Services.AddSingleton<IMapper<IdentitySystemObjectId, AppUser, AppUserDtoSlim>, AppUserMapper>();
 			builder.Services.AddSingleton<IMapper<AttachmentId, Attachment, AttachmentDto>, AttachmentMapper>();
 			builder.Services.AddSingleton<IMapper<IconId, Icon, IconDto>, IconMapper>();
 			builder.Services.AddSingleton<IMapper<LanguageId, Language, LanguageDto>, LanguageMapper>();

@@ -120,22 +120,22 @@ public sealed class TasksController(
 	public async Task<ActionResult<TaskDtoWithId>> PostTask(TaskDto taskDto, CancellationToken cancellationToken)
 	{
 		return (await Post(taskDto, cancellationToken)).Match<ActionResult<TaskDtoWithId>>(
-			(Task task) => CreatedAtAction(nameof(GetTask), new { taskId = task.Id }, new TaskDtoWithId(task, Mapper)),
+			(Task task) => CreatedAtAction(nameof(GetTasks), new List<object>() { new { taskId = task.Id } }, new TaskDtoWithId(task, Mapper)),
 			(ValidationFailure _) => ValidationProblem(ModelState),
 			(Conflict _) => Conflict(),
 			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
 			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 
-	[HttpGet("{taskId}")]
+	[HttpGet("{taskIds}")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
 	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
-	public async Task<ActionResult<TaskDtoWithId>> GetTask(TaskId taskId, CancellationToken cancellationToken)
+	public async Task<ActionResult<IEnumerable<TaskDtoWithId>>> GetTasks([FromRoute] TaskId[] taskIds, CancellationToken cancellationToken)
 	{
-		return (await Get(taskId, cancellationToken)).Match<ActionResult<TaskDtoWithId>>(
-			(Task task) => new TaskDtoWithId(task, Mapper),
-			(NotFound _) => NotFound(),
+		return (await GetMany(taskIds, cancellationToken)).Match<ActionResult<IEnumerable<TaskDtoWithId>>>(
+			(List<Task> tasksList) => tasksList.ConvertAll(task => new TaskDtoWithId(task, Mapper)),
+			(ValidationFailure _) => ValidationProblem(ModelState),
 			(Conflict _) => Conflict(),
 			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
 			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));

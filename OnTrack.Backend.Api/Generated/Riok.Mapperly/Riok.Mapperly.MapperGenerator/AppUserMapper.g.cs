@@ -73,6 +73,15 @@ namespace OnTrack.Backend.Api.Application.Mappings
         }
 
         [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
+        public partial void ToExistingDto(global::OnTrack.Backend.Api.Models.AppUser entity, global::OnTrack.Backend.Api.Dto.AppUserDtoSlim dto)
+        {
+            dto.Id = entity.Id;
+            dto.FirstName = entity.FirstName;
+            dto.LastName = entity.LastName;
+            dto.Bio = entity.Bio;
+        }
+
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
         public override partial global::OnTrack.Backend.Api.Models.AppUser ToNewDomainModel(global::OnTrack.Backend.Api.Dto.AppUserDto dto)
         {
             var target = new global::OnTrack.Backend.Api.Models.AppUser();
@@ -141,6 +150,17 @@ namespace OnTrack.Backend.Api.Application.Mappings
             target.LockoutEnd = entity.LockoutEnd;
             target.LockoutEnabled = entity.LockoutEnabled;
             target.AccessFailedCount = entity.AccessFailedCount;
+            return target;
+        }
+
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
+        public partial global::OnTrack.Backend.Api.Dto.AppUserDtoSlim ToNewDtoSlim(global::OnTrack.Backend.Api.Models.AppUser entity)
+        {
+            var target = new global::OnTrack.Backend.Api.Dto.AppUserDtoSlim();
+            target.Id = entity.Id;
+            target.FirstName = entity.FirstName;
+            target.LastName = entity.LastName;
+            target.Bio = entity.Bio;
             return target;
         }
 

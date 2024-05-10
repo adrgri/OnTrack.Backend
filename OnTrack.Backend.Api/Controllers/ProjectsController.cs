@@ -68,22 +68,22 @@ public sealed class ProjectsController(
 	public async Task<ActionResult<ProjectDtoWithId>> PostProject(ProjectDto projectDto, CancellationToken cancellationToken)
 	{
 		return (await Post(projectDto, cancellationToken)).Match<ActionResult<ProjectDtoWithId>>(
-			(Project project) => CreatedAtAction(nameof(GetProject), new { projectId = project.Id }, new ProjectDtoWithId(project, Mapper)),
+			(Project project) => CreatedAtAction(nameof(GetProjects), new List<object>() { new { projectId = project.Id } }, new ProjectDtoWithId(project, Mapper)),
 			(ValidationFailure _) => ValidationProblem(ModelState),
 			(Conflict _) => Conflict(),
 			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
 			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 
-	[HttpGet("{projectId}")]
+	[HttpGet("{projectIds}")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
 	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
-	public async Task<ActionResult<ProjectDtoWithId>> GetProject(ProjectId projectId, CancellationToken cancellationToken)
+	public async Task<ActionResult<IEnumerable<ProjectDtoWithId>>> GetProjects([FromRoute] ProjectId[] projectIds, CancellationToken cancellationToken)
 	{
-		return (await Get(projectId, cancellationToken)).Match<ActionResult<ProjectDtoWithId>>(
-			(Project project) => new ProjectDtoWithId(project, Mapper),
-			(NotFound _) => NotFound(),
+		return (await GetMany(projectIds, cancellationToken)).Match<ActionResult<IEnumerable<ProjectDtoWithId>>>(
+			(List<Project> projectList) => projectList.ConvertAll(project => new ProjectDtoWithId(project, Mapper)),
+			(ValidationFailure _) => ValidationProblem(ModelState),
 			(Conflict _) => Conflict(),
 			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
 			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));

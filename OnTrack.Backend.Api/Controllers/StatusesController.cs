@@ -1,110 +1,111 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+
+using OneOf;
+using OneOf.Types;
 
 using OnTrack.Backend.Api.Application.Mappings;
+using OnTrack.Backend.Api.DataAccess;
 using OnTrack.Backend.Api.Dto;
 using OnTrack.Backend.Api.Models;
 using OnTrack.Backend.Api.Services;
+using OnTrack.Backend.Api.Threading;
+using OnTrack.Backend.Api.Validation;
 
 namespace OnTrack.Backend.Api.Controllers;
 
 [ApiController, Route("/api/status")]
-public sealed class StatusesController(IEntityAccessService<StatusId, Status> statusesService, ILogger<StatusesController> logger)
-	: ControllerBase
+public sealed class StatusesController(
+	ILogger<StatusesController> logger,
+	IEntityAccessService<StatusId, Status> statusesService,
+	IMapper<StatusId, Status, StatusDto> mapper,
+	IAsyncCollectionValidator<StatusId, OneOf<Status, EntityIdErrorsDescription<StatusId>>> statusExistenceValidator)
+	: GenericController<StatusId, Status, StatusDto, StatusesController>(logger, statusesService, mapper, statusExistenceValidator)
 {
-	private readonly IEntityAccessService<StatusId, Status> _statusesService = statusesService;
-	private readonly ILogger<StatusesController> _logger = logger;
+	protected override Task<OneOf<Status, ValidationFailure>> ConvertToNewDomainModel(StatusDto entityDto)
+	{
+		Status status = Mapper.ToNewDomainModel(entityDto);
+
+		OneOf<Status, ValidationFailure> output = ModelState.IsValid ? status : new ValidationFailure();
+
+		return SysTask.FromResult(output);
+	}
+
+	protected override async Task<OneOf<Status, NotFound, ValidationFailure>> ConvertToNewDomainModel(StatusId entityId, StatusDto entityDto)
+	{
+		return (await ValidateEntityExistence(entityId, EntityCollectionValidator)).Match(status =>
+		{
+			Mapper.ToExistingDomainModel(entityDto, status);
+
+			return (OneOf<Status, NotFound, ValidationFailure>)(ModelState.IsValid ? status : new ValidationFailure());
+		},
+		(NotFound notFound) => notFound);
+	}
 
 	[HttpPost]
 	[ProducesResponseType(StatusCodes.Status201Created)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
-	public async Task<ActionResult<Status>> PostStatus(StatusDto statusDto, [FromServices] IMapper<StatusId, Status, StatusDto> mapper)
+	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<ActionResult<StatusDtoWithId>> PostStatus(StatusDto statusDto, CancellationToken cancellationToken)
 	{
-		Status status = mapper.ToNewDomainModel(statusDto);
-
-		await _statusesService.Add(status);
-		await _statusesService.SaveChanges();
-
-		return CreatedAtAction(nameof(GetStatus), new { statusId = status.Id }, status);
+		return (await Post(statusDto, cancellationToken)).Match<ActionResult<StatusDtoWithId>>(
+			(Status status) => CreatedAtAction(nameof(GetStatuses), new List<object>() { new { statusId = status.Id } }, new StatusDtoWithId(status, Mapper)),
+			(ValidationFailure _) => ValidationProblem(ModelState),
+			(Conflict _) => Conflict(),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 
-	[HttpGet("{statusId}")]
+	[HttpGet("{statusIds}")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
-	public async Task<ActionResult<Status>> GetStatus(StatusId statusId)
+	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<ActionResult<IEnumerable<StatusDtoWithId>>> GetStatuses([FromRoute] StatusId[] statusIds, CancellationToken cancellationToken)
 	{
-		Status? status = await _statusesService.Find(statusId);
-
-		return status switch
-		{
-			null => NotFound(),
-			_ => status
-		};
+		return (await GetMany(statusIds, cancellationToken)).Match<ActionResult<IEnumerable<StatusDtoWithId>>>(
+			(List<Status> statusesList) => statusesList.ConvertAll(status => new StatusDtoWithId(status, Mapper)),
+			(ValidationFailure _) => ValidationProblem(ModelState),
+			(Conflict _) => Conflict(),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 
 	[HttpGet]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	public async Task<ActionResult<IEnumerable<Status>>> GetStatuses()
+	[ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<ActionResult<IEnumerable<StatusDtoWithId>>> GetStatuses(CancellationToken cancellationToken)
 	{
-		IEnumerable<Status> statuses = await _statusesService.GetAll();
-
-		return statuses.ToList();
+		return (await GetAll(cancellationToken)).Match<ActionResult<IEnumerable<StatusDtoWithId>>>(
+			(List<Status> statusesList) => statusesList.ConvertAll(status => new StatusDtoWithId(status, Mapper)),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 
-	[HttpPut("{statusId}")]
+	[HttpPut]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound), ProducesResponseType(StatusCodes.Status409Conflict)]
-	public async Task<IActionResult> PutStatus(StatusId statusId, StatusDto statusDto, [FromServices] IMapper<StatusId, Status, StatusDto> mapper)
+	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
+	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<IActionResult> PutStatus(StatusDtoWithId statusDtoWithId, CancellationToken cancellationToken)
 	{
-		Status? status = await _statusesService.Find(statusId);
-
-		if (status is null)
-		{
-			return NotFound();
-		}
-
-		mapper.ToExistingDomainModel(statusDto, status);
-
-		await _statusesService.Update(status);
-
-		try
-		{
-			await _statusesService.SaveChanges();
-		}
-		catch (DbUpdateConcurrencyException)
-		{
-			return Conflict();
-		}
-
-		return Ok();
+		return (await Put(statusDtoWithId.Id, statusDtoWithId, cancellationToken)).Match(
+			(Status _) => Ok(),
+			(NotFound _) => NotFound(),
+			(ValidationFailure _) => ValidationProblem(ModelState),
+			(Conflict _) => Conflict(),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 
 	[HttpDelete("{statusId}")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound), ProducesResponseType(StatusCodes.Status409Conflict)]
-	public async Task<IActionResult> DeleteStatus(StatusId statusId)
+	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
+	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<IActionResult> DeleteStatus(StatusId statusId, CancellationToken cancellationToken)
 	{
-		Status? status = await _statusesService.Find(statusId);
-
-		if (status is null)
-		{
-			return NotFound();
-		}
-
-		await _statusesService.Remove(status);
-
-		// TODO Przenieś tę logikę do data access service gdy już zaimplementujesz zwracanie rezultatu operacji
-		try
-		{
-			await _statusesService.SaveChanges();
-
-			return Ok();
-		}
-		catch (DbUpdateConcurrencyException ex)
-		{
-			_logger.LogError(ex, "Concurrency exception occurred while trying to delete the status with id {StatusId}.", statusId);
-
-			return Conflict();
-		}
+		return (await Delete(statusId, cancellationToken)).Match(
+			(Success _) => Ok(),
+			(NotFound _) => NotFound(),
+			(Conflict _) => Conflict(),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 }
