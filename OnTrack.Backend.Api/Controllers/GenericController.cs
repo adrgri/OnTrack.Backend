@@ -332,17 +332,10 @@ public abstract class GenericController<TEntityId, TEntity, TDto, TController>(
 		}
 	}
 
-	protected async Task<OneOf<Success, NotFound, Conflict, Canceled, UnexpectedException>> Delete(TEntityId entityId, CancellationToken cancellationToken)
+	protected async Task<OneOf<Success, Conflict, Canceled, UnexpectedException>> Delete(TEntity entity, CancellationToken cancellationToken)
 	{
 		try
 		{
-			TEntity? entity = await EntityAccessService.Find(entityId, cancellationToken);
-
-			if (entity is null)
-			{
-				return new NotFound();
-			}
-
 			await EntityAccessService.Remove(entity, cancellationToken);
 			await EntityAccessService.SaveChanges(cancellationToken);
 
@@ -350,21 +343,37 @@ public abstract class GenericController<TEntityId, TEntity, TDto, TController>(
 		}
 		catch (OperationCanceledException ex)
 		{
-			LogOperationCanceledException(ex, "delete", entityId);
+			LogOperationCanceledException(ex, "delete", entity.Id);
 
 			return new Canceled();
 		}
 		catch (DbUpdateConcurrencyException ex)
 		{
-			LogConcurrencyException(ex, "delete", entityId);
+			LogConcurrencyException(ex, "delete", entity.Id);
 
 			return new Conflict();
 		}
 		catch (Exception ex)
 		{
-			LogUnexpectedException(ex, "delete", entityId);
+			LogUnexpectedException(ex, "delete", entity.Id);
 
 			return new UnexpectedException();
 		}
+	}
+
+	protected async Task<OneOf<Success, NotFound, Conflict, Canceled, UnexpectedException>> Delete(TEntityId entityId, CancellationToken cancellationToken)
+	{
+		TEntity? entity = await EntityAccessService.Find(entityId, cancellationToken);
+
+		if (entity is null)
+		{
+			return new NotFound();
+		}
+
+		return (await Delete(entity, cancellationToken)).Match<OneOf<Success, NotFound, Conflict, Canceled, UnexpectedException>>(
+			(Success success) => success,
+			(Conflict conflict) => conflict,
+			(Canceled canceled) => canceled,
+			(UnexpectedException unexpectedException) => unexpectedException);
 	}
 }
