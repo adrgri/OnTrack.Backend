@@ -35,7 +35,11 @@ public sealed partial class AppUserMapper : StronglyTypedIdMapper<IdentitySystem
 	public override partial void ToExistingDto(AppUser entity, AppUserDto dto);
 
 	// I didn't bother to fix warning RMG020 because this mapper will be changed anyway
+#pragma warning disable IDE0079 // Remove unnecessary suppression
+#pragma warning disable RMG020 // Source member is not mapped to any target member
 	public partial void ToExistingDto(AppUser entity, AppUserDtoSlim dto);
+#pragma warning restore RMG020 // Source member is not mapped to any target member
+#pragma warning restore IDE0079 // Remove unnecessary suppression
 
 	[MapperIgnoreTarget(nameof(AppUser.Id)), MapperIgnoreTarget(nameof(AppUser.NormalizedUserName))]
 	[MapperIgnoreTarget(nameof(AppUser.NormalizedEmail)), MapperIgnoreTarget(nameof(AppUser.PasswordHash))]
@@ -57,7 +61,12 @@ public sealed partial class AppUserMapper : StronglyTypedIdMapper<IdentitySystem
 	[MapProperty(nameof(AppUser.Tasks), nameof(AppUserDto.TaskIds))]
 	public override partial AppUserDto ToNewDto(AppUser entity);
 
+	// I didn't bother to fix warning RMG020 because this mapper will be changed anyway
+#pragma warning disable IDE0079 // Remove unnecessary suppression
+#pragma warning disable RMG020 // Source member is not mapped to any target member
 	public partial AppUserDtoSlim ToNewDtoSlim(AppUser entity);
+#pragma warning restore RMG020 // Source member is not mapped to any target member
+#pragma warning restore IDE0079 // Remove unnecessary suppression
 
 	// TODO: Auć
 	AppUserDtoSlim IMapper<IdentitySystemObjectId, AppUser, AppUserDtoSlim>.ToNewDto(AppUser entity)
