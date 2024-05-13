@@ -13,6 +13,8 @@ public record class TaskDto : IDto
 	public StatusId? StatusId { get; set; }
 	public IconId? IconId { get; set; }
 	public bool IsCompleted { get; set; }
+	public ICollection<TaskId>? PredecessorIds { get; set; }
+	public ICollection<TaskId>? SuccessorIds { get; set; }
 	public ICollection<IdentitySystemObjectId>? AssignedMemberIds { get; set; }
 	public ICollection<ResourceId>? AssignedResourceIds { get; set; }
 	public ICollection<AttachmentId>? AttachmentIds { get; set; }

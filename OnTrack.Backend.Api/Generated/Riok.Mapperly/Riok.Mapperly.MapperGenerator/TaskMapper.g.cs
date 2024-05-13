@@ -23,6 +23,22 @@ namespace OnTrack.Backend.Api.Application.Mappings
             {
                 entity.Icon = null;
             }
+            if (dto.PredecessorIds != null)
+            {
+                entity.Predecessors = MapToListOfTask(dto.PredecessorIds);
+            }
+            else
+            {
+                entity.Predecessors = null;
+            }
+            if (dto.SuccessorIds != null)
+            {
+                entity.Successors = MapToListOfTask(dto.SuccessorIds);
+            }
+            else
+            {
+                entity.Successors = null;
+            }
             if (dto.AssignedMemberIds != null)
             {
                 entity.AssignedMembers = MapToListOfAppUser(dto.AssignedMemberIds);
@@ -81,6 +97,22 @@ namespace OnTrack.Backend.Api.Application.Mappings
             else
             {
                 dto.IconId = null;
+            }
+            if (entity.Predecessors != null)
+            {
+                dto.PredecessorIds = MapToListOfTaskId(entity.Predecessors);
+            }
+            else
+            {
+                dto.PredecessorIds = null;
+            }
+            if (entity.Successors != null)
+            {
+                dto.SuccessorIds = MapToListOfTaskId(entity.Successors);
+            }
+            else
+            {
+                dto.SuccessorIds = null;
             }
             if (entity.AssignedMembers != null)
             {
@@ -141,6 +173,22 @@ namespace OnTrack.Backend.Api.Application.Mappings
             else
             {
                 target.Icon = null;
+            }
+            if (dto.PredecessorIds != null)
+            {
+                target.Predecessors = MapToListOfTask(dto.PredecessorIds);
+            }
+            else
+            {
+                target.Predecessors = null;
+            }
+            if (dto.SuccessorIds != null)
+            {
+                target.Successors = MapToListOfTask(dto.SuccessorIds);
+            }
+            else
+            {
+                target.Successors = null;
             }
             if (dto.AssignedMemberIds != null)
             {
@@ -203,6 +251,22 @@ namespace OnTrack.Backend.Api.Application.Mappings
             {
                 target.IconId = null;
             }
+            if (entity.Predecessors != null)
+            {
+                target.PredecessorIds = MapToListOfTaskId(entity.Predecessors);
+            }
+            else
+            {
+                target.PredecessorIds = null;
+            }
+            if (entity.Successors != null)
+            {
+                target.SuccessorIds = MapToListOfTaskId(entity.Successors);
+            }
+            else
+            {
+                target.SuccessorIds = null;
+            }
             if (entity.AssignedMembers != null)
             {
                 target.AssignedMemberIds = MapToListOfIdentitySystemObjectId(entity.AssignedMembers);
@@ -245,6 +309,17 @@ namespace OnTrack.Backend.Api.Application.Mappings
         }
 
         [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
+        private global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.Task> MapToListOfTask(global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.TaskId> source)
+        {
+            var target = new global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.Task>(source.Count);
+            foreach (var item in source)
+            {
+                target.Add(((global::OnTrack.Backend.Api.Application.Mappings.IMapper<global::OnTrack.Backend.Api.Models.TaskId, global::OnTrack.Backend.Api.Models.Task, global::OnTrack.Backend.Api.Dto.TaskDto>)this).FromId(item));
+            }
+            return target;
+        }
+
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
         private global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.AppUser> MapToListOfAppUser(global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.IdentitySystemObjectId> source)
         {
             var target = new global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.AppUser>(source.Count);
@@ -278,12 +353,12 @@ namespace OnTrack.Backend.Api.Application.Mappings
         }
 
         [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
-        private global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.Task> MapToListOfTask(global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.TaskId> source)
+        private global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.TaskId> MapToListOfTaskId(global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.Task> source)
         {
-            var target = new global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.Task>(source.Count);
+            var target = new global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.TaskId>(source.Count);
             foreach (var item in source)
             {
-                target.Add(((global::OnTrack.Backend.Api.Application.Mappings.IMapper<global::OnTrack.Backend.Api.Models.TaskId, global::OnTrack.Backend.Api.Models.Task, global::OnTrack.Backend.Api.Dto.TaskDto>)this).FromId(item));
+                target.Add(((global::OnTrack.Backend.Api.Application.Mappings.IMapper<global::OnTrack.Backend.Api.Models.TaskId, global::OnTrack.Backend.Api.Models.Task, global::OnTrack.Backend.Api.Dto.TaskDto>)this).ToId(item));
             }
             return target;
         }
@@ -317,17 +392,6 @@ namespace OnTrack.Backend.Api.Application.Mappings
             foreach (var item in source)
             {
                 target.Add(AttachmentMapper.ToId(item));
-            }
-            return target;
-        }
-
-        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
-        private global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.TaskId> MapToListOfTaskId(global::System.Collections.Generic.ICollection<global::OnTrack.Backend.Api.Models.Task> source)
-        {
-            var target = new global::System.Collections.Generic.List<global::OnTrack.Backend.Api.Models.TaskId>(source.Count);
-            foreach (var item in source)
-            {
-                target.Add(((global::OnTrack.Backend.Api.Application.Mappings.IMapper<global::OnTrack.Backend.Api.Models.TaskId, global::OnTrack.Backend.Api.Models.Task, global::OnTrack.Backend.Api.Dto.TaskDto>)this).ToId(item));
             }
             return target;
         }

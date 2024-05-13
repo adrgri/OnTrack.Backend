@@ -16,6 +16,8 @@ public sealed record class Task : Entity<TaskId>
 	public Status? Status { get; set; }
 	public Icon? Icon { get; set; }
 	public bool IsCompleted { get; set; }
+	public ICollection<Task>? Predecessors { get; set; }
+	public ICollection<Task>? Successors { get; set; }
 	public ICollection<AppUser>? AssignedMembers { get; set; }
 	public ICollection<Resource>? AssignedResources { get; set; }
 	public ICollection<Attachment>? Attachments { get; set; }

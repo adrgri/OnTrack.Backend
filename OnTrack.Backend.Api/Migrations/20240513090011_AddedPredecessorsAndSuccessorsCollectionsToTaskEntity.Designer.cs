@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OnTrack.Backend.Api.DataAccess;
 
@@ -11,9 +12,11 @@ using OnTrack.Backend.Api.DataAccess;
 namespace OnTrack.Backend.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240513090011_AddedPredecessorsAndSuccessorsCollectionsToTaskEntity")]
+    partial class AddedPredecessorsAndSuccessorsCollectionsToTaskEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -34,7 +37,7 @@ namespace OnTrack.Backend.Api.Migrations
 
                     b.HasIndex("ProjectsId");
 
-                    b.ToTable("AppUserProject", (string)null);
+                    b.ToTable("AppUserProject");
                 });
 
             modelBuilder.Entity("AppUserTask", b =>
@@ -49,7 +52,7 @@ namespace OnTrack.Backend.Api.Migrations
 
                     b.HasIndex("TasksId");
 
-                    b.ToTable("AppUserTask", (string)null);
+                    b.ToTable("AppUserTask");
                 });
 
             modelBuilder.Entity("OnTrack.Backend.Api.Models.AppRole", b =>
@@ -286,7 +289,7 @@ namespace OnTrack.Backend.Api.Migrations
 
                     b.HasIndex("TaskId");
 
-                    b.ToTable("Attachments", (string)null);
+                    b.ToTable("Attachments");
                 });
 
             modelBuilder.Entity("OnTrack.Backend.Api.Models.Icon", b =>
@@ -303,7 +306,7 @@ namespace OnTrack.Backend.Api.Migrations
 
                     SqlServerKeyBuilderExtensions.IsClustered(b.HasKey("Id"), false);
 
-                    b.ToTable("Icons", (string)null);
+                    b.ToTable("Icons");
                 });
 
             modelBuilder.Entity("OnTrack.Backend.Api.Models.Language", b =>
@@ -324,7 +327,7 @@ namespace OnTrack.Backend.Api.Migrations
 
                     SqlServerKeyBuilderExtensions.IsClustered(b.HasKey("Id"), false);
 
-                    b.ToTable("Languages", (string)null);
+                    b.ToTable("Languages");
                 });
 
             modelBuilder.Entity("OnTrack.Backend.Api.Models.Project", b =>
@@ -344,7 +347,7 @@ namespace OnTrack.Backend.Api.Migrations
 
                     SqlServerKeyBuilderExtensions.IsClustered(b.HasKey("Id"), false);
 
-                    b.ToTable("Projects", (string)null);
+                    b.ToTable("Projects");
                 });
 
             modelBuilder.Entity("OnTrack.Backend.Api.Models.Resource", b =>
@@ -376,7 +379,7 @@ namespace OnTrack.Backend.Api.Migrations
 
                     b.HasIndex("TaskId");
 
-                    b.ToTable("Resources", (string)null);
+                    b.ToTable("Resources");
                 });
 
             modelBuilder.Entity("OnTrack.Backend.Api.Models.Status", b =>
@@ -396,7 +399,7 @@ namespace OnTrack.Backend.Api.Migrations
 
                     SqlServerKeyBuilderExtensions.IsClustered(b.HasKey("Id"), false);
 
-                    b.ToTable("Statuses", (string)null);
+                    b.ToTable("Statuses");
                 });
 
             modelBuilder.Entity("OnTrack.Backend.Api.Models.Task", b =>
@@ -455,7 +458,7 @@ namespace OnTrack.Backend.Api.Migrations
 
                     b.HasIndex("SuccessorId");
 
-                    b.ToTable("Tasks", (string)null);
+                    b.ToTable("Tasks");
                 });
 
             modelBuilder.Entity("AppUserProject", b =>

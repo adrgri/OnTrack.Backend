@@ -47,6 +47,8 @@ public sealed class TasksController(
 		// TODO: Check for duplicate subtasks: if any of the subtasks are repeated any number of times then it's a bad request,
 		//		 you can group by the subtask ids and then check if any of the groups have a count greater than 1
 
+		task.Predecessors = [];
+		task.Successors = [];
 		task.AssignedMembers = [];
 		task.AssignedResources = [];
 		task.Attachments = [];
@@ -70,14 +72,24 @@ public sealed class TasksController(
 			iconValidationResult.AssignIfSucceeded(existingIcon => task.Icon = existingIcon);
 		}
 
-		if (taskDto.AssignedResourceIds is not null)
+		if (taskDto.PredecessorIds is not null)
 		{
-			await ValidateEntitiesExistence(taskDto.AssignedResourceIds, task.AssignedResources, _resourcesExistenceValidator);
+			await ValidateEntitiesExistence(taskDto.PredecessorIds, task.Predecessors, EntityCollectionValidator);
+		}
+
+		if (taskDto.SuccessorIds is not null)
+		{
+			await ValidateEntitiesExistence(taskDto.SuccessorIds, task.Successors, EntityCollectionValidator);
 		}
 
 		if (taskDto.AssignedMemberIds is not null)
 		{
 			await ValidateEntitiesExistence(taskDto.AssignedMemberIds, task.AssignedMembers, _appUserExistenceValidator);
+		}
+
+		if (taskDto.AssignedResourceIds is not null)
+		{
+			await ValidateEntitiesExistence(taskDto.AssignedResourceIds, task.AssignedResources, _resourcesExistenceValidator);
 		}
 
 		if (taskDto.AttachmentIds is not null)
