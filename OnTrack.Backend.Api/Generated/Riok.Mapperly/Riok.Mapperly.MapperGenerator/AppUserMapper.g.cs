@@ -76,6 +76,7 @@ namespace OnTrack.Backend.Api.Application.Mappings
         public partial void ToExistingDto(global::OnTrack.Backend.Api.Models.AppUser entity, global::OnTrack.Backend.Api.Dto.AppUserDtoSlim dto)
         {
             dto.Id = entity.Id;
+            dto.UserName = entity.UserName;
             dto.FirstName = entity.FirstName;
             dto.LastName = entity.LastName;
             dto.Bio = entity.Bio;
@@ -158,6 +159,7 @@ namespace OnTrack.Backend.Api.Application.Mappings
         {
             var target = new global::OnTrack.Backend.Api.Dto.AppUserDtoSlim();
             target.Id = entity.Id;
+            target.UserName = entity.UserName;
             target.FirstName = entity.FirstName;
             target.LastName = entity.LastName;
             target.Bio = entity.Bio;

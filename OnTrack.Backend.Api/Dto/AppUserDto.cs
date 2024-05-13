@@ -15,12 +15,10 @@ public record class AppUserDto : IDto
 	[ProtectedPersonalData]
 	public string? Email { get; set; }
 
-	// TODO Delete the ? after implementing proper identity API
 	[Length(2, 20)]
 	[ProtectedPersonalData]
 	public string? FirstName { get; set; }
 
-	// TODO Delete the ? after implementing proper identity API
 	[Length(0, 40)]
 	[ProtectedPersonalData]
 	public string? LastName { get; set; }
@@ -29,7 +27,6 @@ public record class AppUserDto : IDto
 	[ProtectedPersonalData]
 	public string? Bio { get; set; }
 
-	// TODO Delete the ? after implementing proper identity API
 	[ProtectedPersonalData]
 	public Language? Language { get; set; }
 

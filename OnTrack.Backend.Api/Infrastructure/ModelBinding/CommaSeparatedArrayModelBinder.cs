@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
-
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Diagnostics;
+
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace OnTrack.Backend.Api.Infrastructure.ModelBinding;
 

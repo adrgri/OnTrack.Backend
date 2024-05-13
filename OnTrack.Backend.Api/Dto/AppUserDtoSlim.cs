@@ -7,16 +7,17 @@ using OnTrack.Backend.Api.Models;
 
 namespace OnTrack.Backend.Api.Dto;
 
-public record class AppUserDtoSlim : IDto
+public sealed record class AppUserDtoSlim : IDto
 {
 	public IdentitySystemObjectId Id { get; set; }
 
-	// TODO Delete the ? after implementing proper identity API
+	[ProtectedPersonalData]
+	public string? UserName { get; set; }
+
 	[Length(2, 20)]
 	[ProtectedPersonalData]
 	public string? FirstName { get; set; }
 
-	// TODO Delete the ? after implementing proper identity API
 	[Length(0, 40)]
 	[ProtectedPersonalData]
 	public string? LastName { get; set; }
