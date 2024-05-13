@@ -46,7 +46,7 @@ public sealed class ProjectsController(
 		}
 		else
 		{
-		await ValidateEntitiesExistence(projectDto.MemberIds, project.Members, _appUserExistenceValidator);
+			await ValidateEntitiesExistence(projectDto.MemberIds, project.Members, _appUserExistenceValidator);
 		}
 
 		if (projectDto.TaskIds is not null)
@@ -109,6 +109,28 @@ public sealed class ProjectsController(
 			},
 			(Unauthorized unauthorized) => unauthorized);
 	}
+
+	private async Task<OneOf<Yes, No, Unauthorized>> IsAuthorizedUserIdPresentInTheMembersList(ProjectDto projectDto)
+	{
+		return (await GetAuthorizedUser()).Match<OneOf<Yes, No, Unauthorized>>(
+			authorizedUser => projectDto.MemberIds?.Contains(authorizedUser.Id) is true ? new Yes() : new No(),
+			(Unauthorized unauthorized) => unauthorized);
+	}
+
+	private async Task<OneOf<(Yes, Project), No, NotFound, Unauthorized>> IsAuthorizedUserIdPresentInTheMembersList(ProjectId projectId, CancellationToken cancellationToken)
+	{
+		Project? project = await EntityAccessService.Find(projectId, cancellationToken);
+
+		if (project is null)
+		{
+			return new NotFound();
+		}
+
+		return (await GetAuthorizedUser()).Match<OneOf<(Yes, Project project), No, NotFound, Unauthorized>>(
+			authorizedUser => project.Members?.Contains(authorizedUser) is true ? (new Yes(), project) : new No(),
+			(Unauthorized unauthorized) => unauthorized);
+	}
+
 	[HttpPost]
 	[Authorize]
 	[ProducesResponseType(StatusCodes.Status201Created)]
@@ -118,10 +140,10 @@ public sealed class ProjectsController(
 	{
 		return await (await EnsureAuthorizedUserIdIsPresentInTheMembersList(projectDto)).Match<Task<ActionResult<ProjectDtoWithId>>>(
 			async (Success _) => (await Post(projectDto, cancellationToken)).Match<ActionResult<ProjectDtoWithId>>(
-			(Project project) => CreatedAtAction(nameof(GetProjects), new List<object>() { new { projectId = project.Id } }, new ProjectDtoWithId(project, Mapper)),
-			(ValidationFailure _) => ValidationProblem(ModelState),
-			(Conflict _) => Conflict(),
-			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+				(Project project) => CreatedAtAction(nameof(GetProjects), new List<object>() { new { projectId = project.Id } }, new ProjectDtoWithId(project, Mapper)),
+				(ValidationFailure _) => ValidationProblem(ModelState),
+				(Conflict _) => Conflict(),
+				(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
 				(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError)),
 			(Unauthorized _) => SysTask.FromResult<ActionResult<ProjectDtoWithId>>(StatusCode(StatusCodes.Status500InternalServerError)));
 	}
@@ -152,31 +174,41 @@ public sealed class ProjectsController(
 	}
 
 	[HttpPut]
+	[Authorize]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
-	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status401Unauthorized)]
+	[ProducesResponseType(StatusCodes.Status404NotFound), ProducesResponseType(StatusCodes.Status409Conflict)]
+	[ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
 	public async Task<IActionResult> PutProject(ProjectDtoWithId projectDtoWithId, CancellationToken cancellationToken)
 	{
-		return (await Put(projectDtoWithId.Id, projectDtoWithId, cancellationToken)).Match(
-			(Project _) => Ok(),
-			(NotFound _) => NotFound(),
-			(ValidationFailure _) => ValidationProblem(ModelState),
-			(Conflict _) => Conflict(),
-			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
-			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
+		return await (await IsAuthorizedUserIdPresentInTheMembersList(projectDtoWithId)).Match<Task<IActionResult>>(
+			async (Yes _) => (await Put(projectDtoWithId.Id, projectDtoWithId, cancellationToken)).Match<IActionResult>(
+				(Project _) => Ok(),
+				(NotFound _) => NotFound(),
+				(ValidationFailure _) => ValidationProblem(ModelState),
+				(Conflict _) => Conflict(),
+				(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+				(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError)),
+			(No _) => SysTask.FromResult<IActionResult>(Unauthorized()),
+			(Unauthorized _) => SysTask.FromResult<IActionResult>(StatusCode(StatusCodes.Status500InternalServerError)));
 	}
 
 	[HttpDelete("{projectId}")]
+	[Authorize]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
-	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status401Unauthorized)]
+	[ProducesResponseType(StatusCodes.Status404NotFound), ProducesResponseType(StatusCodes.Status409Conflict)]
+	[ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
 	public async Task<IActionResult> DeleteProject(ProjectId projectId, CancellationToken cancellationToken)
 	{
-		return (await Delete(projectId, cancellationToken)).Match(
-			(Success _) => Ok(),
-			(NotFound _) => NotFound(),
-			(Conflict _) => Conflict(),
-			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
-			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
+		return await (await IsAuthorizedUserIdPresentInTheMembersList(projectId, cancellationToken)).Match<Task<IActionResult>>(
+			async ((Yes _, Project project) tuple) => (await Delete(tuple.project, cancellationToken)).Match(
+				(Success _) => Ok(),
+				(Conflict _) => Conflict(),
+				(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+				(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError)),
+			(No _) => SysTask.FromResult<IActionResult>(Unauthorized()),
+			(NotFound _) => SysTask.FromResult<IActionResult>(NotFound()),
+			(Unauthorized _) => SysTask.FromResult<IActionResult>(StatusCode(StatusCodes.Status500InternalServerError)));
 	}
 }
