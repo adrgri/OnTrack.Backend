@@ -499,6 +499,7 @@ internal static class AppExtensions
 		}
 		catch (Exception ex)
 		{
+			// TODO: Nie odrzucaj wyjątku, tylko zaloguj go i zwróć OneOf aby zewnętrzny kod wiedział, że coś poszło nie tak i nie należy kontynuować
 			logger.LogCritical(ex, "Application could not run, see attached exception.");
 			throw;
 		}

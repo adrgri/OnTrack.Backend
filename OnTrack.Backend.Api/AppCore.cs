@@ -14,6 +14,7 @@ internal static class AppCore
 		}
 		catch (Exception ex)
 		{
+			// TODO: Nie odrzucaj wyjątku, tylko zaloguj go i zwróć OneOf aby zewnętrzny kod wiedział, że coś poszło nie tak i nie należy kontynuować
 			logger.LogCritical(ex, "{ConfigurationName} configuration failed, see attached exception.", configurationName);
 			throw;
 		}
