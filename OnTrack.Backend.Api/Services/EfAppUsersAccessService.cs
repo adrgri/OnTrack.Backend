@@ -18,6 +18,7 @@ public sealed class EfAppUsersAccessService<TDbContext>(TDbContext context)
 	public override Task<AppUser?> Find(IdentitySystemObjectId id, CancellationToken cancellationToken)
 	{
 		return Query(cancellationToken)
+			.Include(appUser => appUser.Language)
 			.Include(appUser => appUser.Projects)
 			.Include(appUser => appUser.Tasks)
 			.Where(appUser => appUser.Id == id)
@@ -27,6 +28,7 @@ public sealed class EfAppUsersAccessService<TDbContext>(TDbContext context)
 	public override async Task<IEnumerable<AppUser>> GetAll(CancellationToken cancellationToken)
 	{
 		return await Query(cancellationToken)
+			.Include(appUser => appUser.Language)
 			.Include(appUser => appUser.Projects)
 			.Include(appUser => appUser.Tasks)
 			.ToListAsync(cancellationToken);
