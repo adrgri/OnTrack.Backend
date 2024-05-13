@@ -7,6 +7,10 @@ namespace OnTrack.Backend.Api.Application.Mappings
         [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
         public override partial void ToExistingDomainModel(global::OnTrack.Backend.Api.Dto.ProjectDto dto, global::OnTrack.Backend.Api.Models.Project entity)
         {
+            if (dto.MemberIds != null)
+            {
+                entity.Members = MapToListOfAppUser(dto.MemberIds);
+            }
             if (dto.TaskIds != null)
             {
                 entity.Tasks = MapToListOfTask(dto.TaskIds);
@@ -17,7 +21,6 @@ namespace OnTrack.Backend.Api.Application.Mappings
             }
             entity.Title = dto.Title;
             entity.Description = dto.Description;
-            entity.Members = MapToListOfAppUser(dto.MemberIds);
         }
 
         [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
@@ -40,6 +43,10 @@ namespace OnTrack.Backend.Api.Application.Mappings
         public override partial global::OnTrack.Backend.Api.Models.Project ToNewDomainModel(global::OnTrack.Backend.Api.Dto.ProjectDto dto)
         {
             var target = new global::OnTrack.Backend.Api.Models.Project();
+            if (dto.MemberIds != null)
+            {
+                target.Members = MapToListOfAppUser(dto.MemberIds);
+            }
             if (dto.TaskIds != null)
             {
                 target.Tasks = MapToListOfTask(dto.TaskIds);
@@ -50,7 +57,6 @@ namespace OnTrack.Backend.Api.Application.Mappings
             }
             target.Title = dto.Title;
             target.Description = dto.Description;
-            target.Members = MapToListOfAppUser(dto.MemberIds);
             return target;
         }
 
