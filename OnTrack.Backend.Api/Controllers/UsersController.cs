@@ -52,8 +52,9 @@ public class UsersController(
 	}
 
 	[HttpGet("by/ids/{userIds}")]
+	[Authorize]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
+	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status401Unauthorized)]
 	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
 	public async Task<ActionResult<IEnumerable<AppUserDtoSlim>>> GetUsers([FromRoute] IdentitySystemObjectId[] userIds, [FromServices] IMapper<IdentitySystemObjectId, AppUser, AppUserDtoSlim> mapper, CancellationToken cancellationToken)
 	{
@@ -81,23 +82,24 @@ public class UsersController(
 	// to samo zrób dla reszty entities
 	[HttpGet("by/email/{email}")]
 	[Authorize]
-	public async Task<ActionResult<AppUserDtoWithId>> GetUserByEmail([EmailAddress] string email)
+	[ProducesResponseType(StatusCodes.Status200OK)]
+	[ProducesResponseType(StatusCodes.Status401Unauthorized), ProducesResponseType(StatusCodes.Status404NotFound)]
+	public async Task<ActionResult<AppUserDtoSlim>> GetUserByEmail([EmailAddress] string email, [FromServices] IMapper<IdentitySystemObjectId, AppUser, AppUserDtoSlim> mapper)
 	{
-		// TODO: Upewnij się, że tylko jeden użytkownik może mieć dany email i nie będzie zduplikowanych adresów email
-		AppUser? user = await _userManager.FindByEmailAsync(email);
+		AppUser? maybeUser = await _userManager.FindByEmailAsync(email);
 
-		return user switch
+		return maybeUser switch
 		{
-			not null => new AppUserDtoWithId(user, Mapper),
+			not null => new AppUserDtoSlim(maybeUser, mapper),
 			null => NotFound()
 		};
 	}
 
 	private async Task<OneOf<AppUser, Error>> GetAuthorizedUser()
 	{
-		AppUser? authorizedUser = await _userManager.GetUserAsync(User);
+		AppUser? maybeAuthorizedUser = await _userManager.GetUserAsync(User);
 
-		if (authorizedUser is null)
+		if (maybeAuthorizedUser is null)
 		{
 			Logger.LogError(new UnreachableException(),
 				   "User manager could not get authorized user based on the current claims principal {ClaimsPrincipal}. Authorized user is null.",
@@ -106,7 +108,7 @@ public class UsersController(
 			return new Error();
 		}
 
-		return authorizedUser;
+		return maybeAuthorizedUser;
 	}
 
 	[HttpGet("me")]
@@ -119,6 +121,54 @@ public class UsersController(
 			authorizedUser => new AppUserDtoWithId(authorizedUser, Mapper),
 			(Error _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
+
+	//public record class AppUserPutRequestDto : IDto
+	//{
+	//	[ProtectedPersonalData]
+	//	public string? UserName { get; set; }
+
+	//	[EmailAddress]
+	//	[ProtectedPersonalData]
+	//	public string? Email { get; set; }
+
+	//	[Length(2, 20)]
+	//	[ProtectedPersonalData]
+	//	public string? FirstName { get; set; }
+
+	//	[Length(0, 40)]
+	//	[ProtectedPersonalData]
+	//	public string? LastName { get; set; }
+
+	//	[Length(0, 1_000)]
+	//	[ProtectedPersonalData]
+	//	public string? Bio { get; set; }
+
+	//	[ProtectedPersonalData]
+	//	public Language? Language { get; set; }
+
+	//	//public PathString? ProfilePicturePath { get; set; }
+	//}
+
+	//[HttpPut("me")]
+	//[Authorize]
+	//[ProducesResponseType(StatusCodes.Status200OK)]
+	//[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status401Unauthorized)]
+	//[ProducesResponseType(StatusCodes.Status404NotFound), ProducesResponseType(StatusCodes.Status409Conflict)]
+	//[ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	//public async Task<IActionResult> PutUser(AppUserPutRequestDto appUserPutRequestDto, [FromServices] IMapper<IdentitySystemObjectId, AppUser, AppUserPutRequestDto> mapper, CancellationToken cancellationToken)
+	//{
+	//	return (await GetAuthorizedUser()).Match<IActionResult>(
+	//		authorizedUser => mapper.ToExistingDomainModel(appUserPutRequestDto, authorizedUser),
+	//		(Unauthorized _) => StatusCode(StatusCodes.Status500InternalServerError));
+
+	//	return (await Put(appUserPutRequestDto.Id, appUserPutRequestDto, cancellationToken)).Match(
+	//		(Task _) => Ok(),
+	//		(NotFound _) => NotFound(),
+	//		(ValidationFailure _) => ValidationProblem(ModelState),
+	//		(Conflict _) => Conflict(),
+	//		(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+	//		(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
+	//}
 
 	//// TODO: Dodaj nowy DTO dla tego endpointa z możliwością zmiany danych użytkownika, które nie są częścią systemu tożsamościowego
 	//[HttpPut]
