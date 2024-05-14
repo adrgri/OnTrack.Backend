@@ -8,7 +8,6 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 
 using OneOf;
@@ -97,14 +96,21 @@ internal static class AppExtensions
 			.GetSection(corsConfigurationSectionKey)
 			.Get<CorsConfiguration>();
 
+		const string corsEnabledMessageTemplate = "CORS is {CorsEnabled}.";
+
 		if (corsConfiguration is null)
 		{
 			logger.LogInformation("CORS configuration section named {CorsConfigurationKey} was not found.", corsConfigurationSectionKey);
-			logger.LogInformation("CORS is disabled.");
+		}
+
+		if (corsConfiguration?.Enabled is null or false)
+		{
+			logger.LogInformation(corsEnabledMessageTemplate, "Disabled");
 			return;
 		}
 
 		logger.LogWarning("CORS configuration section found.");
+		logger.LogWarning(corsEnabledMessageTemplate, "Enabled");
 
 		builder.Services.AddCors(options => options.AddDefaultPolicy(corsPolicyBuilder =>
 		{
@@ -133,19 +139,19 @@ internal static class AppExtensions
 
 			if (corsConfiguration.AllowCredentials is not null)
 			{
-				const string message = "CORS credentials are {AllowCredentials}.";
+				const string corsCredentialsMessageTemplate = "CORS credentials are {AllowCredentials}.";
 
 				if (corsConfiguration.AllowCredentials.Value)
 				{
 					corsPolicyBuilder.AllowCredentials();
 
-					logger.LogWarning(message, "Allowed");
+					logger.LogWarning(corsCredentialsMessageTemplate, "Allowed");
 				}
 				else
 				{
 					corsPolicyBuilder.DisallowCredentials();
 
-					logger.LogInformation(message, "Disallowed");
+					logger.LogInformation(corsCredentialsMessageTemplate, "Disallowed");
 				}
 			}
 
