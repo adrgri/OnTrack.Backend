@@ -95,7 +95,8 @@ public class UsersController(
 		};
 	}
 
-	private async Task<OneOf<AppUser, Error>> GetAuthorizedUser()
+	// TODO: Consolidate this with the methods from the projects controller
+	private async Task<OneOf<AppUser, Unauthorized>> GetAuthorizedUser()
 	{
 		AppUser? maybeAuthorizedUser = await _userManager.GetUserAsync(User);
 
@@ -105,7 +106,7 @@ public class UsersController(
 				   "User manager could not get authorized user based on the current claims principal {ClaimsPrincipal}. Authorized user is null.",
 				   User);
 
-			return new Error();
+			return new Unauthorized();
 		}
 
 		return maybeAuthorizedUser;
