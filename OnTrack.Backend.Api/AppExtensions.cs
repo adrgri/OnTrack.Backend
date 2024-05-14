@@ -320,9 +320,13 @@ internal static class AppExtensions
 				.GetSection(ConfigurationSectionKeys.Smtp)
 				.Get<SmtpEmailServicesOptions>();
 
+			logger.LogInformation("SMTP Email Services {SmtpEmailServicesEnabled}.", smtpEmailServicesOptions?.Enabled == true ? "Enabled" : "Disabled");
+
 			if (smtpEmailServicesOptions?.Enabled == true)
 			{
 				builder.Services.AddTransient<IEmailSender<AppUser>, EmailSenderService<AppUser>>();
+
+				logger.LogInformation("Current SMTP config is {Config}.", JsonSerializer.Serialize(smtpEmailServicesOptions));
 			}
 		}, "Email services", logger);
 	}
@@ -457,34 +461,6 @@ internal static class AppExtensions
 
 			app.MapControllers();
 		}, "Pipeline", logger);
-	}
-
-	private static void LogSmtpConfiguration(WebApplication app, ILogger logger)
-	{
-		SmtpEmailServicesOptions smtpEmailServicesOptions = app.Services.GetRequiredService<IOptions<SmtpEmailServicesOptions>>().Value;
-
-		logger.LogInformation("SMTP Email Services {SmtpEmailServicesEnabled}.", smtpEmailServicesOptions.Enabled ? "Enabled" : "Disabled");
-
-		if (smtpEmailServicesOptions.Enabled)
-		{
-			logger.LogInformation("Current SMTP config is {Config}.", JsonSerializer.Serialize(smtpEmailServicesOptions));
-		}
-	}
-
-	// TODO Zmień nazwę tej metody na jakąś inną, w zależności od tego, co ona będzie robiła w przyszłości
-	public static void SanityCheck(this WebApplication app, ILogger logger)
-	{
-		logger.LogInformation("Performing sanity checks...");
-
-		try
-		{
-			LogSmtpConfiguration(app, logger);
-		}
-		catch (Exception ex)
-		{
-			logger.LogCritical(ex, "Application will not run with current configuration, see attached exception.");
-			throw;
-		}
 	}
 
 	/// <summary>

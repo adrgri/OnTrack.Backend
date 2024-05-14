@@ -28,8 +28,6 @@ try
 
 	app.ConfigureRequestPipeline(logger);
 
-	app.SanityCheck(logger);
-
 	await app.RunAsync(logger);
 }
 finally
