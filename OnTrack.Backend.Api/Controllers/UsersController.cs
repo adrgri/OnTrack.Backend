@@ -86,41 +86,58 @@ public class UsersController(
 	[ProducesResponseType(StatusCodes.Status401Unauthorized), ProducesResponseType(StatusCodes.Status404NotFound)]
 	public async Task<ActionResult<AppUserDtoSlim>> GetUserByEmail([EmailAddress] string email, [FromServices] IMapper<IdentitySystemObjectId, AppUser, AppUserDtoSlim> mapper)
 	{
-		AppUser? maybeUser = await _userManager.FindByEmailAsync(email);
+		AppUser? user = await _userManager.FindByEmailAsync(email);
 
-		return maybeUser switch
+		return user switch
 		{
-			not null => new AppUserDtoSlim(maybeUser, mapper),
+			not null => new AppUserDtoSlim(user, mapper),
 			null => NotFound()
 		};
 	}
 
 	// TODO: Consolidate this with the methods from the projects controller
-	private async Task<OneOf<AppUser, Unauthorized>> GetAuthorizedUser()
+	private async Task<OneOf<AppUser, Unauthorized, Conflict, Canceled, UnexpectedException>> GetAuthorizedUser(CancellationToken cancellationToken)
 	{
-		AppUser? maybeAuthorizedUser = await _userManager.GetUserAsync(User);
+		AppUser? authorizedUser = await _userManager.GetUserAsync(User);
 
-		if (maybeAuthorizedUser is null)
+		if (authorizedUser is null)
 		{
-			Logger.LogError(new UnreachableException(),
-				   "User manager could not get authorized user based on the current claims principal {ClaimsPrincipal}. Authorized user is null.",
-				   User);
+			Logger.LogError(
+				new InvalidOperationException(),
+				"User manager could not get authorized user based on the current claims principal {ClaimsPrincipal}. AppUser returned by the user manager is null.",
+				User);
 
 			return new Unauthorized();
 		}
 
-		return maybeAuthorizedUser;
+		return (await Get(authorizedUser.Id, cancellationToken)).Match<OneOf<AppUser, Unauthorized, Conflict, Canceled, UnexpectedException>>(
+			(AppUser user) => user,
+			(NotFound _) =>
+			{
+				Logger.LogError(
+				new UnreachableException(),
+				"Authorized user with Id {UserId} was found by the user manager but not found by the entity access service.",
+				authorizedUser.Id);
+
+				return new UnexpectedException();
+			},
+			(Conflict conflict) => conflict,
+			(Canceled canceled) => canceled,
+			(UnexpectedException unexpectedException) => unexpectedException);
 	}
 
 	[HttpGet("me")]
 	[Authorize]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status401Unauthorized)]
-	public async Task<ActionResult<AppUserDtoWithId>> GetAuthorizedUserInformation()
+	public async Task<ActionResult<AppUserDtoWithId>> GetAuthorizedUserInformation(CancellationToken cancellationToken)
 	{
-		return (await GetAuthorizedUser()).Match<ActionResult<AppUserDtoWithId>>(
+		return (await GetAuthorizedUser(cancellationToken)).Match<ActionResult<AppUserDtoWithId>>(
 			authorizedUser => new AppUserDtoWithId(authorizedUser, Mapper),
-			(Error _) => StatusCode(StatusCodes.Status500InternalServerError));
+			(Unauthorized _) => StatusCode(StatusCodes.Status500InternalServerError),
+			(Conflict _) => Conflict(),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 
 	//public record class AppUserPutRequestDto : IDto
