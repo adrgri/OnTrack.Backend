@@ -51,7 +51,7 @@ public class UsersController(
 		(NotFound notFound) => notFound);
 	}
 
-	[HttpGet("{userIds}")]
+	[HttpGet("by/ids/{userIds}")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
 	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
@@ -79,7 +79,7 @@ public class UsersController(
 
 	// TODO: W zamian za to Query poniżej utwórz interfejsy do zarządzania poszczególnymi entities np "IAppUsersAccessService" i dodaj do niego metodę GetByEmail i inne, które będą potrzebne,
 	// to samo zrób dla reszty entities
-	[HttpGet("byEmail/{email}")]
+	[HttpGet("by/email/{email}")]
 	[Authorize]
 	public async Task<ActionResult<AppUserDtoWithId>> GetUserByEmail([EmailAddress] string email)
 	{
