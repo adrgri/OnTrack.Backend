@@ -2,20 +2,30 @@
 
 public static class ProjectExtensions
 {
-	public static int NumberOfTasks(this Project project)
+	public static (int CompletedItemsCount, int TotalItemsCount) Metrics(this Project project)
 	{
-		int numberOfTasks = 0;
+		(int CompletedItemsCount, int TotalItemsCount) output = (0, 0);
 
-		if (project.Tasks is null)
+		if (project.Tasks?.Count is null or 0)
 		{
-			return numberOfTasks;
+			return output;
 		}
 
-		foreach (Task task in project.Tasks)
-		{
-			numberOfTasks += task.NumberOfSubtasks();
-		}
+		HashSet<TaskId> countedItems = [];
 
-		return numberOfTasks;
+		return project.Tasks.Aggregate(output, ((int CompletedItemsCount, int TotalItemsCount) output, Task task) =>
+		{
+			(int completedItemsCount, int totalItemsCount) = task.Metrics(countedItems);
+
+			output.CompletedItemsCount += completedItemsCount;
+			output.TotalItemsCount += totalItemsCount;
+
+			return output;
+		});
+	}
+
+	public static Progress Progress(this Project project)
+	{
+		return new Progress(project.Metrics());
 	}
 }
