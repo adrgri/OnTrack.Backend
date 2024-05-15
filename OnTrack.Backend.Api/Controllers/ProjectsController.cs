@@ -11,6 +11,7 @@ using OnTrack.Backend.Api.Application.Mappings;
 using OnTrack.Backend.Api.DataAccess;
 using OnTrack.Backend.Api.Dto;
 using OnTrack.Backend.Api.Models;
+using OnTrack.Backend.Api.Models.Extensions;
 using OnTrack.Backend.Api.Services;
 using OnTrack.Backend.Api.Threading;
 using OnTrack.Backend.Api.Validation;
@@ -169,6 +170,20 @@ public sealed class ProjectsController(
 	{
 		return (await GetAll(cancellationToken)).Match<ActionResult<IEnumerable<ProjectDtoWithId>>>(
 			(List<Project> projectsList) => projectsList.ConvertAll(project => new ProjectDtoWithId(project, Mapper)),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
+	}
+
+	[HttpGet("progress/{projectIds}")]
+	[ProducesResponseType(StatusCodes.Status200OK)]
+	[ProducesResponseType(StatusCodes.Status400BadRequest)]
+	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<ActionResult<IEnumerable<ProjectProgressDto>>> Progress([FromRoute] ProjectId[] projectIds, CancellationToken cancellationToken)
+	{
+		return (await GetMany(projectIds, cancellationToken)).Match<ActionResult<IEnumerable<ProjectProgressDto>>>(
+			(List<Project> projectList) => projectList.ConvertAll(project => new ProjectProgressDto(project.Id, project.Progress())),
+			(ValidationFailure _) => ValidationProblem(ModelState),
+			(Conflict _) => Conflict(),
 			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
 			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}

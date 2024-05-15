@@ -7,6 +7,7 @@ using OnTrack.Backend.Api.Application.Mappings;
 using OnTrack.Backend.Api.DataAccess;
 using OnTrack.Backend.Api.Dto;
 using OnTrack.Backend.Api.Models;
+using OnTrack.Backend.Api.Models.Extensions;
 using OnTrack.Backend.Api.OneOf;
 using OnTrack.Backend.Api.Services;
 using OnTrack.Backend.Api.Threading;
@@ -160,6 +161,20 @@ public sealed class TasksController(
 	{
 		return (await GetAll(cancellationToken)).Match<ActionResult<IEnumerable<TaskDtoWithId>>>(
 			(List<Task> tasksList) => tasksList.ConvertAll(task => new TaskDtoWithId(task, Mapper)),
+			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
+	}
+
+	[HttpGet("progress/{taskIds}")]
+	[ProducesResponseType(StatusCodes.Status200OK)]
+	[ProducesResponseType(StatusCodes.Status400BadRequest)]
+	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<ActionResult<IEnumerable<TaskProgressDto>>> Progress([FromRoute] TaskId[] taskIds, CancellationToken cancellationToken)
+	{
+		return (await GetMany(taskIds, cancellationToken)).Match<ActionResult<IEnumerable<TaskProgressDto>>>(
+			(List<Task> tasksList) => tasksList.ConvertAll(task => new TaskProgressDto(task.Id, task.Progress())),
+			(ValidationFailure _) => ValidationProblem(ModelState),
+			(Conflict _) => Conflict(),
 			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
 			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
