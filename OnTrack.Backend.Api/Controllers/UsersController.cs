@@ -22,14 +22,14 @@ namespace OnTrack.Backend.Api.Controllers;
 public class UsersController(
 	ILogger<UsersController> logger,
 	IEntityAccessService<IdentitySystemObjectId, AppUser> usersAccessService,
-	IMapper<IdentitySystemObjectId, AppUser, AppUserDto> mapper,
+	IMapper<IdentitySystemObjectId, AppUser, AppUserDtoSlim> mapper,
 	IAsyncCollectionValidator<IdentitySystemObjectId, OneOf<AppUser, EntityIdErrorsDescription<IdentitySystemObjectId>>> usersCollectionValidator,
 	UserManager<AppUser> userManager)
-	: GenericController<IdentitySystemObjectId, AppUser, AppUserDto, UsersController>(logger, usersAccessService, mapper, usersCollectionValidator)
+	: GenericController<IdentitySystemObjectId, AppUser, AppUserDtoSlim, UsersController>(logger, usersAccessService, mapper, usersCollectionValidator)
 {
 	private readonly UserManager<AppUser> _userManager = userManager;
 
-	protected override Task<OneOf<AppUser, ValidationFailure>> ConvertToNewDomainModel(AppUserDto entityDto)
+	protected override Task<OneOf<AppUser, ValidationFailure>> ConvertToNewDomainModel(AppUserDtoSlim entityDto)
 	{
 		OneOf<AppUser, ValidationFailure> output = ModelState.IsValid switch
 		{
@@ -40,13 +40,13 @@ public class UsersController(
 		return SysTask.FromResult(output);
 	}
 
-	protected override async Task<OneOf<AppUser, NotFound, ValidationFailure>> ConvertToNewDomainModel(IdentitySystemObjectId entityId, AppUserDto entityDto)
+	protected override async Task<OneOf<AppUser, NotFound, ValidationFailure>> ConvertToNewDomainModel(IdentitySystemObjectId entityId, AppUserDtoSlim entityDto)
 	{
-		return (await ValidateEntityExistence(entityId, EntityCollectionValidator)).Match<OneOf<AppUser, NotFound, ValidationFailure>>(language =>
+		return (await ValidateEntityExistence(entityId, EntityCollectionValidator)).Match<OneOf<AppUser, NotFound, ValidationFailure>>(appUser =>
 		{
-			Mapper.ToExistingDomainModel(entityDto, language);
+			Mapper.ToExistingDomainModel(entityDto, appUser);
 
-			return ModelState.IsValid ? language : new ValidationFailure();
+			return ModelState.IsValid ? appUser : new ValidationFailure();
 		},
 		(NotFound notFound) => notFound);
 	}
@@ -56,7 +56,7 @@ public class UsersController(
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status401Unauthorized)]
 	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
-	public async Task<ActionResult<IEnumerable<AppUserDtoSlim>>> GetUsers([FromRoute] IdentitySystemObjectId[] userIds, [FromServices] IMapper<IdentitySystemObjectId, AppUser, AppUserDtoSlim> mapper, CancellationToken cancellationToken)
+	public async Task<ActionResult<IEnumerable<AppUserDtoSlimWithId>>> GetUsers([FromRoute] IdentitySystemObjectId[] userIds, CancellationToken cancellationToken)
 	{
 		// TODO: Dodaj tutaj jakiś max limit na ilość Id, żeby nie otworzyć API na potencjalny atak DDOS
 
@@ -70,27 +70,28 @@ public class UsersController(
 		//	// Walidacja
 		//}
 
-		return (await GetMany(userIds, cancellationToken)).Match<ActionResult<IEnumerable<AppUserDtoSlim>>>(
-			(List<AppUser> usersList) => usersList.ConvertAll(user => new AppUserDtoSlim(user, mapper)),
+		return (await GetMany(userIds, cancellationToken)).Match<ActionResult<IEnumerable<AppUserDtoSlimWithId>>>(
+			(List<AppUser> usersList) => usersList.ConvertAll(user => new AppUserDtoSlimWithId(user, Mapper)),
 			(ValidationFailure _) => ValidationProblem(ModelState),
 			(Conflict _) => Conflict(),
 			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
 			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 
-	// TODO: W zamian za to Query poniżej utwórz interfejsy do zarządzania poszczególnymi entities np "IAppUsersAccessService" i dodaj do niego metodę GetByEmail i inne, które będą potrzebne,
+	// TODO: W zamian za to Query poniżej utwórz interfejsy do zarządzania poszczególnymi entities np "IAppUsersAccessService",
+	// dodaj do niego metodę GetByEmail i inne, które będą potrzebne,
 	// to samo zrób dla reszty entities
 	[HttpGet("by/email/{email}")]
 	[Authorize]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status401Unauthorized), ProducesResponseType(StatusCodes.Status404NotFound)]
-	public async Task<ActionResult<AppUserDtoSlim>> GetUserByEmail([EmailAddress] string email, [FromServices] IMapper<IdentitySystemObjectId, AppUser, AppUserDtoSlim> mapper)
+	public async Task<ActionResult<AppUserDtoSlimWithId>> GetUserByEmail([EmailAddress] string email)
 	{
 		AppUser? user = await _userManager.FindByEmailAsync(email);
 
 		return user switch
 		{
-			not null => new AppUserDtoSlim(user, mapper),
+			not null => new AppUserDtoSlimWithId(user, Mapper),
 			null => NotFound()
 		};
 	}
@@ -115,9 +116,9 @@ public class UsersController(
 			(NotFound _) =>
 			{
 				Logger.LogError(
-				new UnreachableException(),
-				"Authorized user with Id {UserId} was found by the user manager but not found by the entity access service.",
-				authorizedUser.Id);
+					new UnreachableException(),
+					"Authorized user with Id {UserId} was found by the user manager but not found by the entity access service.",
+					authorizedUser.Id);
 
 				return new UnexpectedException();
 			},
@@ -130,78 +131,42 @@ public class UsersController(
 	[Authorize]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status401Unauthorized)]
-	public async Task<ActionResult<AppUserDtoWithId>> GetAuthorizedUserInformation(CancellationToken cancellationToken)
+	public async Task<ActionResult<AppUserDtoWithId>> GetAuthorizedUserInformation([FromServices] IMapper<IdentitySystemObjectId, AppUser, AppUserDto> fullAppUserMapper, CancellationToken cancellationToken)
 	{
 		return (await GetAuthorizedUser(cancellationToken)).Match<ActionResult<AppUserDtoWithId>>(
-			authorizedUser => new AppUserDtoWithId(authorizedUser, Mapper),
+			authorizedUser => new AppUserDtoWithId(authorizedUser, fullAppUserMapper),
 			(Unauthorized _) => StatusCode(StatusCodes.Status500InternalServerError),
 			(Conflict _) => Conflict(),
 			(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
 			(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
 	}
 
-	//public record class AppUserPutRequestDto : IDto
-	//{
-	//	[ProtectedPersonalData]
-	//	public string? UserName { get; set; }
+	[HttpPut("me")]
+	[Authorize]
+	[ProducesResponseType(StatusCodes.Status200OK)]
+	[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status401Unauthorized)]
+	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
+	public async Task<IActionResult> PutUser(AppUserDtoSlim appUserDtoSlim, CancellationToken cancellationToken)
+	{
+		return await (await GetAuthorizedUser(cancellationToken)).Match<Task<IActionResult>>(
+			async authorizedUser => (await Put(authorizedUser.Id, appUserDtoSlim, cancellationToken)).Match<IActionResult>(
+				(AppUser _) => Ok(),
+				(NotFound _) =>
+				{
+					Logger.LogError(
+						new UnreachableException(),
+						"Authorized user with Id {UserId} was found by the GetAuthorizedUser method but not found by the Put method.",
+						authorizedUser.Id);
 
-	//	[EmailAddress]
-	//	[ProtectedPersonalData]
-	//	public string? Email { get; set; }
-
-	//	[Length(2, 20)]
-	//	[ProtectedPersonalData]
-	//	public string? FirstName { get; set; }
-
-	//	[Length(0, 40)]
-	//	[ProtectedPersonalData]
-	//	public string? LastName { get; set; }
-
-	//	[Length(0, 1_000)]
-	//	[ProtectedPersonalData]
-	//	public string? Bio { get; set; }
-
-	//	[ProtectedPersonalData]
-	//	public Language? Language { get; set; }
-
-	//	//public PathString? ProfilePicturePath { get; set; }
-	//}
-
-	//[HttpPut("me")]
-	//[Authorize]
-	//[ProducesResponseType(StatusCodes.Status200OK)]
-	//[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status401Unauthorized)]
-	//[ProducesResponseType(StatusCodes.Status404NotFound), ProducesResponseType(StatusCodes.Status409Conflict)]
-	//[ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
-	//public async Task<IActionResult> PutUser(AppUserPutRequestDto appUserPutRequestDto, [FromServices] IMapper<IdentitySystemObjectId, AppUser, AppUserPutRequestDto> mapper, CancellationToken cancellationToken)
-	//{
-	//	return (await GetAuthorizedUser()).Match<IActionResult>(
-	//		authorizedUser => mapper.ToExistingDomainModel(appUserPutRequestDto, authorizedUser),
-	//		(Unauthorized _) => StatusCode(StatusCodes.Status500InternalServerError));
-
-	//	return (await Put(appUserPutRequestDto.Id, appUserPutRequestDto, cancellationToken)).Match(
-	//		(Task _) => Ok(),
-	//		(NotFound _) => NotFound(),
-	//		(ValidationFailure _) => ValidationProblem(ModelState),
-	//		(Conflict _) => Conflict(),
-	//		(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
-	//		(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
-	//}
-
-	//// TODO: Dodaj nowy DTO dla tego endpointa z możliwością zmiany danych użytkownika, które nie są częścią systemu tożsamościowego
-	//[HttpPut]
-	//[Authorize]
-	//[ProducesResponseType(StatusCodes.Status200OK)]
-	//[ProducesResponseType(StatusCodes.Status400BadRequest), ProducesResponseType(StatusCodes.Status404NotFound)]
-	//[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
-	//public async Task<IActionResult> PutUser(AppUserDtoWithId userDtoWithId, CancellationToken cancellationToken)
-	//{
-	//	return (await Put(userDtoWithId.Id, userDtoWithId, cancellationToken)).Match(
-	//		(AppUser _) => Ok(),
-	//		(NotFound _) => NotFound(),
-	//		(ValidationFailure _) => ValidationProblem(ModelState),
-	//		(Conflict _) => Conflict(),
-	//		(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
-	//		(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError));
-	//}
+					return StatusCode(StatusCodes.Status500InternalServerError);
+				},
+				(ValidationFailure _) => ValidationProblem(ModelState),
+				(Conflict _) => Conflict(),
+				(Canceled _) => StatusCode(StatusCodes.Status499ClientClosedRequest),
+				(UnexpectedException _) => StatusCode(StatusCodes.Status500InternalServerError)),
+			(Unauthorized _) => SysTask.FromResult<IActionResult>(StatusCode(StatusCodes.Status500InternalServerError)),
+			(Conflict _) => SysTask.FromResult<IActionResult>(Conflict()),
+			(Canceled _) => SysTask.FromResult<IActionResult>(StatusCode(StatusCodes.Status499ClientClosedRequest)),
+			(UnexpectedException _) => SysTask.FromResult<IActionResult>(StatusCode(StatusCodes.Status500InternalServerError)));
+	}
 }

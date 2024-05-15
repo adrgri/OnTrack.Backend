@@ -18,6 +18,9 @@ namespace OnTrack.Backend.Api.Controllers;
 // TODO: Add a constructor parameter to give this class an ability to validate the entities by taking an async validator
 // + add virtual methods to 1. prepare them for validation 2. handle and post validation results, maybe adding to the ModelState can be done in the base class
 // as virtual implementation and the derived class can override it to add more specific error handling should they need it
+
+// TODO: Dodaj tu po jednej metodzie dla każdego(?) verba http, które będą przyjmować
+// jakiś inny Dto niż ten główny (określiony na poziomie klasy) i dopóki dasz im odpowiedniego mappera jako parametr to powinno to tak zadziałać
 public abstract class GenericController<TEntityId, TEntity, TDto, TController>(
 	ILogger<TController> logger,
 	IEntityAccessService<TEntityId, TEntity> entityAccessService,

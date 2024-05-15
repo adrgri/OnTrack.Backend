@@ -21,11 +21,12 @@ public sealed partial class AppUserMapper : StronglyTypedIdMapper<IdentitySystem
 	[MapProperty(nameof(AppUserDto.TaskIds), nameof(AppUser.Tasks))]
 	public override partial void ToExistingDomainModel(AppUserDto dto, AppUser entity);
 
-	// TODO: Trochę to kiepsko wygląda, ale na razie niech będzie tak, i tak mapper za chwilę będzie inaczej skonstruowany
-	public void ToExistingDomainModel(AppUserDtoSlim dto, AppUser entity)
-	{
-		throw new NotSupportedException();
-	}
+	// I didn't bother to fix warning RMG020 because this mapper will be changed anyway
+#pragma warning disable IDE0079 // Remove unnecessary suppression
+#pragma warning disable RMG012 // Source member is not mapped to any target member
+	public partial void ToExistingDomainModel(AppUserDtoSlim dto, AppUser entity);
+#pragma warning restore RMG012 // Source member is not mapped to any target member
+#pragma warning restore IDE0079 // Remove unnecessary suppression
 
 	[MapperIgnoreSource(nameof(AppUser.Id)), MapperIgnoreSource(nameof(AppUser.NormalizedUserName))]
 	[MapperIgnoreSource(nameof(AppUser.NormalizedEmail)), MapperIgnoreSource(nameof(AppUser.PasswordHash))]
@@ -48,7 +49,7 @@ public sealed partial class AppUserMapper : StronglyTypedIdMapper<IdentitySystem
 	[MapProperty(nameof(AppUserDto.TaskIds), nameof(AppUser.Tasks))]
 	public override partial AppUser ToNewDomainModel(AppUserDto dto);
 
-	// TODO: Tu to samo
+	// TODO: Trochę to kiepsko wygląda, ale na razie niech będzie tak, i tak mapper za chwilę będzie inaczej skonstruowany
 	public AppUser ToNewDomainModel(AppUserDtoSlim dto)
 	{
 		throw new NotSupportedException();

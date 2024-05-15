@@ -39,6 +39,15 @@ namespace OnTrack.Backend.Api.Application.Mappings
         }
 
         [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
+        public partial void ToExistingDomainModel(global::OnTrack.Backend.Api.Dto.AppUserDtoSlim dto, global::OnTrack.Backend.Api.Models.AppUser entity)
+        {
+            entity.FirstName = dto.FirstName;
+            entity.LastName = dto.LastName;
+            entity.Bio = dto.Bio;
+            entity.UserName = dto.UserName;
+        }
+
+        [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
         public override partial void ToExistingDto(global::OnTrack.Backend.Api.Models.AppUser entity, global::OnTrack.Backend.Api.Dto.AppUserDto dto)
         {
             if (entity.Projects != null)
@@ -75,7 +84,6 @@ namespace OnTrack.Backend.Api.Application.Mappings
         [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
         public partial void ToExistingDto(global::OnTrack.Backend.Api.Models.AppUser entity, global::OnTrack.Backend.Api.Dto.AppUserDtoSlim dto)
         {
-            dto.Id = entity.Id;
             dto.UserName = entity.UserName;
             dto.FirstName = entity.FirstName;
             dto.LastName = entity.LastName;
@@ -158,7 +166,6 @@ namespace OnTrack.Backend.Api.Application.Mappings
         public partial global::OnTrack.Backend.Api.Dto.AppUserDtoSlim ToNewDtoSlim(global::OnTrack.Backend.Api.Models.AppUser entity)
         {
             var target = new global::OnTrack.Backend.Api.Dto.AppUserDtoSlim();
-            target.Id = entity.Id;
             target.UserName = entity.UserName;
             target.FirstName = entity.FirstName;
             target.LastName = entity.LastName;

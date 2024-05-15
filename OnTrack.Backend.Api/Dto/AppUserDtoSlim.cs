@@ -2,15 +2,10 @@
 
 using Microsoft.AspNetCore.Identity;
 
-using OnTrack.Backend.Api.Application.Mappings;
-using OnTrack.Backend.Api.Models;
-
 namespace OnTrack.Backend.Api.Dto;
 
-public sealed record class AppUserDtoSlim : IDto
+public record class AppUserDtoSlim : IDto
 {
-	public IdentitySystemObjectId Id { get; set; }
-
 	[ProtectedPersonalData]
 	public string? UserName { get; set; }
 
@@ -26,14 +21,8 @@ public sealed record class AppUserDtoSlim : IDto
 	[ProtectedPersonalData]
 	public string? Bio { get; set; }
 
-	public AppUserDtoSlim()
-	{
-	}
+	//[ProtectedPersonalData]
+	//public LanguageId? LanguageId { get; set; }
 
-	public AppUserDtoSlim(AppUser user, IMapper<IdentitySystemObjectId, AppUser, AppUserDtoSlim> mapper)
-	{
-		mapper.ToExistingDto(user, this);
-
-		Id = user.Id;
-	}
+	//public PathString? ProfilePicturePath { get; set; }
 }
