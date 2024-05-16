@@ -1,6 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
-
-using OnTrack.Backend.Api.Models;
+﻿using OnTrack.Backend.Api.Models;
 
 namespace OnTrack.Backend.Api.Infrastructure.DataAccess;
 
