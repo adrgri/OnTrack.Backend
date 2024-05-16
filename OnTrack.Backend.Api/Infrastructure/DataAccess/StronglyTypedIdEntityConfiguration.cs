@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.ValueGeneration;
 
 using OnTrack.Backend.Api.ComponentModel;
 using OnTrack.Backend.Api.Models;
@@ -24,6 +25,7 @@ public class StronglyTypedIdEntityConfiguration<TEntityId, TEntity> : IStronglyT
 			// enable the strongly typed Id to be auto-generated when adding new entities to the database using the SaveChanges method (only works from EF Core 7 onwards)
 			/*/ WARNING: IF YOU USE THIS METHOD, YOU MUST MAKE SURE THAT EITHER THE ID IS NEVER SET BY THE APPLICATION OR THE CLUSTERED PRIMARY INDEX IS DISABLED, /*/
 			/*/ OTHERWISE YOU WILL REINTRODUCE A BUG FIXED IN THIS COMMIT /*/
+			//.HasValueGenerator<SequentialGuidValueGenerator>()
 			.ValueGeneratedOnAdd();
 	}
 }

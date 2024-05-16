@@ -8,6 +8,7 @@ public interface IEntity<TEntityId>
 {
 	[Key]
 #if ApplicationGeneratedGuidIdsAllowed == false
+	// TODO: This Id will potentially be generated either by the application or by the database, this also depends on the configuration of the IStronglyTypedId implementation,
 	[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
 #endif
 	TEntityId Id { get; set; }
