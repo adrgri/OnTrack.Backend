@@ -6,8 +6,9 @@ namespace OnTrack.Backend.Api.Dto;
 
 public record class AppUserDtoSlim : IDto
 {
-	[ProtectedPersonalData]
-	public string? UserName { get; set; }
+	// TODO: Removed username because setting it to null caused the built-in identity api to throw null reference exception upon login
+	//[ProtectedPersonalData]
+	//public string? UserName { get; set; }
 
 	[Length(2, 20)]
 	[ProtectedPersonalData]

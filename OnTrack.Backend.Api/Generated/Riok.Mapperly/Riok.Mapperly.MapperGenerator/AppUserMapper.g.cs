@@ -44,7 +44,6 @@ namespace OnTrack.Backend.Api.Application.Mappings
             entity.FirstName = dto.FirstName;
             entity.LastName = dto.LastName;
             entity.Bio = dto.Bio;
-            entity.UserName = dto.UserName;
         }
 
         [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
@@ -84,7 +83,6 @@ namespace OnTrack.Backend.Api.Application.Mappings
         [global::System.CodeDom.Compiler.GeneratedCode("Riok.Mapperly", "3.5.1.0")]
         public partial void ToExistingDto(global::OnTrack.Backend.Api.Models.AppUser entity, global::OnTrack.Backend.Api.Dto.AppUserDtoSlim dto)
         {
-            dto.UserName = entity.UserName;
             dto.FirstName = entity.FirstName;
             dto.LastName = entity.LastName;
             dto.Bio = entity.Bio;
@@ -166,7 +164,6 @@ namespace OnTrack.Backend.Api.Application.Mappings
         public partial global::OnTrack.Backend.Api.Dto.AppUserDtoSlim ToNewDtoSlim(global::OnTrack.Backend.Api.Models.AppUser entity)
         {
             var target = new global::OnTrack.Backend.Api.Dto.AppUserDtoSlim();
-            target.UserName = entity.UserName;
             target.FirstName = entity.FirstName;
             target.LastName = entity.LastName;
             target.Bio = entity.Bio;
