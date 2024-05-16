@@ -180,9 +180,9 @@ public class UsersController(
 	{
 		try
 		{
-			// I used null-forgiving operator here because EF Core & SQL will handle nulls in the query appropriately
+			// I used null-forgiving operator here because EF Core & SQL will handle nulls in this query appropriately
 			List<AppUserDtoSlimWithId> usersMatchingSearchQuery = await EntityAccessService.Query(cancellationToken)
-				.Where(user => user.UserName!.Contains(query) || user.FirstName!.Contains(query) || user.LastName!.Contains(query))
+				.Where(user => /*user.UserName!.Contains(query) ||*/ user.Email!.Contains(query) || user.FirstName!.Contains(query) || user.LastName!.Contains(query))
 				.Select(user => new AppUserDtoSlimWithId(user, Mapper))
 				.ToListAsync(cancellationToken);
 
