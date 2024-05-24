@@ -1,4 +1,5 @@
 ﻿using OnTrack.Backend.Api;
+using OnTrack.Backend.Api.DataAccess;
 
 using Serilog;
 using Serilog.Debugging;
@@ -26,7 +27,7 @@ try
 
 	WebApplication app = builder.BuildApplication(logger);
 
-	//app.EnsureDatabaseCreatedAndMigrated<AppDbContext>(logger);
+	app.EnsureDatabaseCreated<AppDbContext>(logger);
 	app.ConfigureRequestPipeline(logger);
 
 	await app.RunAsync(logger);

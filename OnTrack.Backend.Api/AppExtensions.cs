@@ -439,30 +439,18 @@ internal static class AppExtensions
 		return app;
 	}
 
-	//public static void EnsureDatabaseCreatedAndMigrated<T>(this IApplicationBuilder app, ILogger logger)
-	//	where T : DbContext
-	//{
-	//	ConfigurationWrapper(() =>
-	//	{
-	//		using IServiceScope serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope();
+	public static void EnsureDatabaseCreated<T>(this IApplicationBuilder app, ILogger logger)
+		where T : DbContext
+	{
+		ConfigurationWrapper(() =>
+		{
+			using IServiceScope serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope();
 
-	//		T context = serviceScope.ServiceProvider.GetRequiredService<T>();
+			T context = serviceScope.ServiceProvider.GetRequiredService<T>();
 
-	//		context.Database.EnsureCreated();
-
-	//		if (context.Database.GetPendingMigrations().Any())
-	//		{
-	//			try
-	//			{
-	//				context.Database.Migrate();
-	//			}
-	//			catch (SqliteException ex)
-	//			{
-	//				logger.LogError(ex, "The migrations could not be applied.");
-	//			}
-	//		}
-	//	}, "Database", logger);
-	//}
+			context.Database.EnsureCreated();
+		}, "Database", logger);
+	}
 
 	///	<summary>
 	///	Configures the HTTP request pipeline
