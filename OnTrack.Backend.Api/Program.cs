@@ -26,6 +26,7 @@ try
 
 	WebApplication app = builder.BuildApplication(logger);
 
+	//app.EnsureDatabaseCreatedAndMigrated<AppDbContext>(logger);
 	app.ConfigureRequestPipeline(logger);
 
 	await app.RunAsync(logger);

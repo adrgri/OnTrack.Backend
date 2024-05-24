@@ -8,6 +8,7 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.OpenApi.Models;
 
 using OneOf;
@@ -263,6 +264,13 @@ internal static class AppExtensions
 		return connectionsConfiguration;
 	}
 
+	private static void GenericRelationalDatabaseServerConfiguration<TBuilder, TExtension>(RelationalDbContextOptionsBuilder<TBuilder, TExtension> options)
+		where TBuilder : RelationalDbContextOptionsBuilder<TBuilder, TExtension>
+		where TExtension : RelationalOptionsExtension, new()
+	{
+		options.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+	}
+
 	/// <summary>
 	/// Adds services to the container
 	/// </summary>
@@ -276,8 +284,20 @@ internal static class AppExtensions
 			{
 				ConnectionsConfiguration connectionsConfiguration = GetConnectionsConfiguration(builder, logger);
 
-				options.UseSqlServer(connectionsConfiguration.SqlDatabase,
-					   options => options.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
+				switch (connectionsConfiguration.SqlServerType)
+				{
+					case SqlServerType.MsSqlServer:
+						options.UseSqlServer(connectionsConfiguration.SqlDatabase, GenericRelationalDatabaseServerConfiguration);
+						break;
+					case SqlServerType.Sqlite:
+						options.UseSqlite(connectionsConfiguration.SqlDatabase, GenericRelationalDatabaseServerConfiguration);
+						break;
+					default:
+						logger.LogCritical("Specified SQL Server {SqlServerType} is not supported, the application can not continue.", connectionsConfiguration.SqlServerType);
+						throw new NotSupportedException($"Specified SQL Server ({connectionsConfiguration.SqlServerType}) is not supported.");
+				}
+
+				logger.LogInformation("Using supported {SqlServerType} SQL Server.", connectionsConfiguration.SqlServerType);
 
 				if (builder.Environment.IsProduction() == false)
 				{
@@ -418,6 +438,31 @@ internal static class AppExtensions
 
 		return app;
 	}
+
+	//public static void EnsureDatabaseCreatedAndMigrated<T>(this IApplicationBuilder app, ILogger logger)
+	//	where T : DbContext
+	//{
+	//	ConfigurationWrapper(() =>
+	//	{
+	//		using IServiceScope serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope();
+
+	//		T context = serviceScope.ServiceProvider.GetRequiredService<T>();
+
+	//		context.Database.EnsureCreated();
+
+	//		if (context.Database.GetPendingMigrations().Any())
+	//		{
+	//			try
+	//			{
+	//				context.Database.Migrate();
+	//			}
+	//			catch (SqliteException ex)
+	//			{
+	//				logger.LogError(ex, "The migrations could not be applied.");
+	//			}
+	//		}
+	//	}, "Database", logger);
+	//}
 
 	///	<summary>
 	///	Configures the HTTP request pipeline
