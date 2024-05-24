@@ -30,7 +30,7 @@
     <Compile Remove="$(CompilerGeneratedFilesOutputPath)/**/*.cs" />
     <None Include="$(CompilerGeneratedFilesOutputPath)/**/*.cs" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <PackageReference Include="EfCore.SchemaCompare" Version="8.0.4" />
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.22.0" />
@@ -47,6 +47,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <TreatAsUsed>true</TreatAsUsed>
     </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.5" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.5" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.5">
       <PrivateAssets>all</PrivateAssets>
