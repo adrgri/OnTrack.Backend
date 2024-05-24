@@ -5,7 +5,7 @@ namespace OnTrack.Backend.Api.Configuration;
 
 public sealed class ConnectionsConfiguration : IOptionsSection
 {
-	public static string SectionKey => "ConnectionStrings";
+	public static string SectionKey => "Connections";
 
 	[Required]
 	public SqlServerType SqlServerType { get; set; }
