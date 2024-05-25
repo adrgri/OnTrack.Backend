@@ -439,14 +439,14 @@ internal static class AppExtensions
 		return app;
 	}
 
-	public static void EnsureDatabaseCreated<T>(this IApplicationBuilder app, ILogger logger)
-		where T : DbContext
+	public static void EnsureDatabaseCreated<TDbContext>(this IApplicationBuilder app, ILogger logger)
+		where TDbContext : DbContext
 	{
 		ConfigurationWrapper(() =>
 		{
 			using IServiceScope serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope();
 
-			T context = serviceScope.ServiceProvider.GetRequiredService<T>();
+			TDbContext context = serviceScope.ServiceProvider.GetRequiredService<TDbContext>();
 
 			context.Database.EnsureCreated();
 		}, "Database", logger);
