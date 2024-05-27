@@ -5,6 +5,9 @@ using System.Reflection;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+
+using OnTrack.Backend.Api.Configuration;
 
 namespace OnTrack.Backend.Api.Controllers;
 
@@ -53,6 +56,20 @@ public sealed class DebugController(ILogger<DebugController> logger, IConfigurat
 			_webHostEnvironment.EnvironmentName,
 			isNotProduction = _webHostEnvironment.IsProduction() == false
 		});
+	}
+
+	[HttpGet("corsOptions")]
+	[ProducesResponseType(StatusCodes.Status200OK)]
+	public ActionResult<CorsOptions> GetCorsOptions([FromServices] IOptions<CorsOptions> corsOptions)
+	{
+		return Ok(corsOptions.Value);
+	}
+
+	[HttpGet("smtpServicesOptions")]
+	[ProducesResponseType(StatusCodes.Status200OK)]
+	public ActionResult<SmtpServicesOptions> GetSmtpServicesOptions([FromServices] IOptions<SmtpServicesOptions> smtpServicesOptions)
+	{
+		return Ok(smtpServicesOptions.Value);
 	}
 
 	[HttpGet("downloadSqliteLogDatabase")]
