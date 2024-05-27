@@ -119,13 +119,13 @@ internal static class AppExtensions
 	}
 
 	private static void ConfigureCorsOrigins(this CorsPolicyBuilder corsPolicyBuilder, CorsOptions corsConfiguration, ILogger logger)
+	{
+		if (corsConfiguration.AllowedOrigins is not null)
 		{
-			if (corsConfiguration.AllowedOrigins is not null)
-			{
-				corsPolicyBuilder.WithOrigins(corsConfiguration.AllowedOrigins);
+			corsPolicyBuilder.WithOrigins(corsConfiguration.AllowedOrigins);
 
-				logger.LogWarning("CORS is enabled for the following origins: {AllowedOrigins}.", (object)corsConfiguration.AllowedOrigins);
-			}
+			logger.LogWarning("CORS is enabled for the following origins: {AllowedOrigins}.", (object)corsConfiguration.AllowedOrigins);
+		}
 		else
 		{
 			logger.LogInformation("No CORS origins are allowed.");
@@ -134,12 +134,12 @@ internal static class AppExtensions
 
 	private static void ConfigureCorsMethods(this CorsPolicyBuilder corsPolicyBuilder, CorsOptions corsConfiguration, ILogger logger)
 	{
-			if (corsConfiguration.AllowedMethods is not null)
-			{
-				corsPolicyBuilder.WithMethods(corsConfiguration.AllowedMethods);
+		if (corsConfiguration.AllowedMethods is not null)
+		{
+			corsPolicyBuilder.WithMethods(corsConfiguration.AllowedMethods);
 
-				logger.LogWarning("CORS is enabled for the following methods: {AllowedMethods}.", (object)corsConfiguration.AllowedMethods);
-			}
+			logger.LogWarning("CORS is enabled for the following methods: {AllowedMethods}.", (object)corsConfiguration.AllowedMethods);
+		}
 		else
 		{
 			logger.LogInformation("No CORS methods are allowed.");
@@ -148,12 +148,12 @@ internal static class AppExtensions
 
 	private static void ConfigureCorsHeaders(this CorsPolicyBuilder corsPolicyBuilder, CorsOptions corsConfiguration, ILogger logger)
 	{
-			if (corsConfiguration.AllowedHeaders is not null)
-			{
-				corsPolicyBuilder.WithHeaders(corsConfiguration.AllowedHeaders);
+		if (corsConfiguration.AllowedHeaders is not null)
+		{
+			corsPolicyBuilder.WithHeaders(corsConfiguration.AllowedHeaders);
 
-				logger.LogWarning("CORS is enabled for the following headers: {AllowedHeaders}.", (object)corsConfiguration.AllowedHeaders);
-			}
+			logger.LogWarning("CORS is enabled for the following headers: {AllowedHeaders}.", (object)corsConfiguration.AllowedHeaders);
+		}
 		else
 		{
 			logger.LogInformation("No CORS headers are allowed.");
@@ -162,23 +162,23 @@ internal static class AppExtensions
 
 	private static void ConfigureCorsCredentials(this CorsPolicyBuilder corsPolicyBuilder, CorsOptions corsConfiguration, ILogger logger)
 	{
-			if (corsConfiguration.AllowCredentials is not null)
+		if (corsConfiguration.AllowCredentials is not null)
+		{
+			const string corsCredentialsMessageTemplate = "CORS credentials are {AllowCredentials}.";
+
+			if (corsConfiguration.AllowCredentials.Value)
 			{
-				const string corsCredentialsMessageTemplate = "CORS credentials are {AllowCredentials}.";
+				corsPolicyBuilder.AllowCredentials();
 
-				if (corsConfiguration.AllowCredentials.Value)
-				{
-					corsPolicyBuilder.AllowCredentials();
-
-					logger.LogWarning(corsCredentialsMessageTemplate, "Allowed");
-				}
-				else
-				{
-					corsPolicyBuilder.DisallowCredentials();
-
-					logger.LogInformation(corsCredentialsMessageTemplate, "Disallowed");
-				}
+				logger.LogWarning(corsCredentialsMessageTemplate, "Allowed");
 			}
+			else
+			{
+				corsPolicyBuilder.DisallowCredentials();
+
+				logger.LogInformation(corsCredentialsMessageTemplate, "Disallowed");
+			}
+		}
 	}
 
 	private static void ConfigureCors(this WebApplicationBuilder builder, ILogger logger)
@@ -345,7 +345,7 @@ internal static class AppExtensions
 						options.UseSqlite(connectionsConfiguration.SqlDatabase, GenericRelationalDatabaseServerConfiguration);
 						break;
 					default:
-						logger.LogCritical("Specified SQL Server {SqlServerType} is not supported, the application can not continue.", connectionsConfiguration.SqlServerType);
+						logger.LogCritical("Specified SQL Server {SqlServerType} is not supported, the application can not run.", connectionsConfiguration.SqlServerType);
 						throw new NotSupportedException($"Specified SQL Server ({connectionsConfiguration.SqlServerType}) is not supported.");
 				}
 
@@ -499,6 +499,18 @@ internal static class AppExtensions
 			using IServiceScope serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope();
 
 			TDbContext context = serviceScope.ServiceProvider.GetRequiredService<TDbContext>();
+
+			//try
+			//{
+			//	if (context.Database.GetPendingMigrations().Any())
+			//	{
+			//		context.Database.Migrate();
+			//	}
+			//}
+			//catch (SqliteException ex)
+			//{
+			//	logger.LogError(ex, "Pending migrations could not be applied, the application might not work properly.");
+			//}
 
 			context.Database.EnsureCreated();
 		}, "Database", logger);
