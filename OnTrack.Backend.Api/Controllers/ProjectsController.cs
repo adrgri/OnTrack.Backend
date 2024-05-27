@@ -139,7 +139,7 @@ public sealed class ProjectsController(
 	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
 	public async Task<ActionResult<ProjectDtoWithId>> PostProject(ProjectDto projectDto, CancellationToken cancellationToken)
 	{
-		return await (await EnsureAuthorizedUserIdIsPresentInTheMembersList(projectDto)).Match<Task<ActionResult<ProjectDtoWithId>>>(
+		return await (await EnsureAuthorizedUserIdIsPresentInTheMembersList(projectDto)).Match(
 			async (Success _) => (await Post(projectDto, cancellationToken)).Match<ActionResult<ProjectDtoWithId>>(
 				(Project project) => CreatedAtAction(nameof(GetProjects), new List<object>() { new { projectId = project.Id } }, new ProjectDtoWithId(project, Mapper)),
 				(ValidationFailure _) => ValidationProblem(ModelState),
@@ -196,7 +196,7 @@ public sealed class ProjectsController(
 	[ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
 	public async Task<IActionResult> PutProject(ProjectDtoWithId projectDtoWithId, CancellationToken cancellationToken)
 	{
-		return await (await IsAuthorizedUserIdPresentInTheMembersList(projectDtoWithId)).Match<Task<IActionResult>>(
+		return await (await IsAuthorizedUserIdPresentInTheMembersList(projectDtoWithId)).Match(
 			async (Yes _) => (await Put(projectDtoWithId.Id, projectDtoWithId, cancellationToken)).Match<IActionResult>(
 				(Project _) => Ok(),
 				(NotFound _) => NotFound(),

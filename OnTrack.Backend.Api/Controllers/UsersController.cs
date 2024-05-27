@@ -149,7 +149,7 @@ public class UsersController(
 	[ProducesResponseType(StatusCodes.Status409Conflict), ProducesResponseType(StatusCodes.Status499ClientClosedRequest)]
 	public async Task<IActionResult> PutUser(AppUserDtoSlim appUserDtoSlim, CancellationToken cancellationToken)
 	{
-		return await (await GetAuthorizedUser(cancellationToken)).Match<Task<IActionResult>>(
+		return await (await GetAuthorizedUser(cancellationToken)).Match(
 			async authorizedUser => (await Put(authorizedUser.Id, appUserDtoSlim, cancellationToken)).Match<IActionResult>(
 				(AppUser _) => Ok(),
 				(NotFound _) =>
