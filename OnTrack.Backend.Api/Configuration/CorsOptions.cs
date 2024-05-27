@@ -1,12 +1,12 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace OnTrack.Backend.Api.Configuration;
 
-public sealed class CorsConfiguration : IOptionsSection
+public sealed class CorsOptions : IOptionsSection
 {
 	public static string SectionKey => "Cors";
 
-	[JsonIgnore]
+	[Required]
 	public bool Enabled { get; set; }
 
 	public string[]? AllowedOrigins { get; set; }

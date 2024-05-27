@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
+using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -28,6 +29,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 
 using static OnTrack.Backend.Api.AppCore;
 
+using CorsOptions = OnTrack.Backend.Api.Configuration.CorsOptions;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace OnTrack.Backend.Api;
@@ -62,6 +64,14 @@ internal static class AppExtensions
 		return logger;
 	}
 
+	private static void ConfigureCorsOptions(this WebApplicationBuilder builder)
+	{
+		builder.Services.AddOptions<CorsOptions>()
+			.Bind(builder.Configuration.GetRequiredSection(ConfigurationSectionKeys.Cors))
+			.ValidateDataAnnotations()
+			.ValidateOnStart();
+	}
+
 	private static void ConfigureSmtpEmailServicesOptions(this WebApplicationBuilder builder)
 	{
 		builder.Services.AddOptions<SmtpServicesOptions>()
@@ -74,6 +84,7 @@ internal static class AppExtensions
 	{
 		IDictionary<string, Action> optionsToConfigure = new Dictionary<string, Action>()
 		{
+			{ nameof(CorsOptions), builder.ConfigureCorsOptions },
 			{ nameof(SmtpServicesOptions), builder.ConfigureSmtpEmailServicesOptions },
 		};
 
@@ -87,57 +98,70 @@ internal static class AppExtensions
 		}, "Options", logger);
 	}
 
-	private static void ConfigureCors(this WebApplicationBuilder builder, ILogger logger)
+	private static void GetCorsConfiguration(this WebApplicationBuilder builder, ILogger logger, out CorsOptions? corsConfiguration)
 	{
-		logger.LogInformation("Configuring {ConfigurationName}...", "Default CORS policy");
+		logger.LogInformation("Retrieving {ConfigurationName} configuration...", "CORS");
 
 		string corsConfigurationSectionKey = ConfigurationSectionKeys.Cors;
 
-		CorsConfiguration? corsConfiguration = builder.Configuration
+		corsConfiguration = builder.Configuration
 			.GetSection(corsConfigurationSectionKey)
-			.Get<CorsConfiguration>();
+			.Get<CorsOptions>();
 
-		const string corsEnabledMessageTemplate = "CORS is {CorsEnabled}.";
-
-		if (corsConfiguration is null)
+		if (corsConfiguration is not null)
 		{
-			logger.LogInformation("CORS configuration section named {CorsConfigurationKey} was not found.", corsConfigurationSectionKey);
+			logger.LogWarning("{ConfigurationName} configuration retrieved successfully.", "CORS");
 		}
-
-		if (corsConfiguration?.Enabled is null or false)
+		else
 		{
-			logger.LogInformation(corsEnabledMessageTemplate, "Disabled");
-			return;
+			logger.LogInformation("{ConfigurationName} configuration section named {SectionKey} was not found.", "CORS", corsConfigurationSectionKey);
 		}
+	}
 
-		logger.LogWarning("CORS configuration section found.");
-		logger.LogWarning(corsEnabledMessageTemplate, "Enabled");
-
-		builder.Services.AddCors(options => options.AddDefaultPolicy(corsPolicyBuilder =>
+	private static void ConfigureCorsOrigins(this CorsPolicyBuilder corsPolicyBuilder, CorsOptions corsConfiguration, ILogger logger)
 		{
-			logger.LogWarning("Enabling {ConfigurationName}...", "Default CORS policy");
-
 			if (corsConfiguration.AllowedOrigins is not null)
 			{
 				corsPolicyBuilder.WithOrigins(corsConfiguration.AllowedOrigins);
 
 				logger.LogWarning("CORS is enabled for the following origins: {AllowedOrigins}.", (object)corsConfiguration.AllowedOrigins);
 			}
+		else
+		{
+			logger.LogInformation("No CORS origins are allowed.");
+		}
+	}
 
+	private static void ConfigureCorsMethods(this CorsPolicyBuilder corsPolicyBuilder, CorsOptions corsConfiguration, ILogger logger)
+	{
 			if (corsConfiguration.AllowedMethods is not null)
 			{
 				corsPolicyBuilder.WithMethods(corsConfiguration.AllowedMethods);
 
 				logger.LogWarning("CORS is enabled for the following methods: {AllowedMethods}.", (object)corsConfiguration.AllowedMethods);
 			}
+		else
+		{
+			logger.LogInformation("No CORS methods are allowed.");
+		}
+	}
 
+	private static void ConfigureCorsHeaders(this CorsPolicyBuilder corsPolicyBuilder, CorsOptions corsConfiguration, ILogger logger)
+	{
 			if (corsConfiguration.AllowedHeaders is not null)
 			{
 				corsPolicyBuilder.WithHeaders(corsConfiguration.AllowedHeaders);
 
 				logger.LogWarning("CORS is enabled for the following headers: {AllowedHeaders}.", (object)corsConfiguration.AllowedHeaders);
 			}
+		else
+		{
+			logger.LogInformation("No CORS headers are allowed.");
+		}
+	}
 
+	private static void ConfigureCorsCredentials(this CorsPolicyBuilder corsPolicyBuilder, CorsOptions corsConfiguration, ILogger logger)
+	{
 			if (corsConfiguration.AllowCredentials is not null)
 			{
 				const string corsCredentialsMessageTemplate = "CORS credentials are {AllowCredentials}.";
@@ -155,9 +179,37 @@ internal static class AppExtensions
 					logger.LogInformation(corsCredentialsMessageTemplate, "Disallowed");
 				}
 			}
+	}
 
-			logger.LogWarning("{ConfigurationName} configured.", "Default CORS policy");
+	private static void ConfigureCors(this WebApplicationBuilder builder, ILogger logger)
+	{
+		logger.LogInformation("Configuring {ConfigurationName}...", "Default CORS policy");
+
+		GetCorsConfiguration(builder, logger, out CorsOptions? corsConfiguration);
+
+		const string corsEnabledMessageTemplate = "CORS is {CorsEnabled}.";
+
+		if (corsConfiguration?.Enabled is null or false)
+		{
+			logger.LogInformation(corsEnabledMessageTemplate, "Disabled");
+			return;
+		}
+
+		logger.LogWarning(corsEnabledMessageTemplate, "Enabled");
+
+		builder.Services.AddCors(options => options.AddDefaultPolicy(corsPolicyBuilder =>
+		{
+			logger.LogWarning("Enabling {ConfigurationName}...", "Default CORS policy");
+
+			corsPolicyBuilder.ConfigureCorsOrigins(corsConfiguration, logger);
+			corsPolicyBuilder.ConfigureCorsMethods(corsConfiguration, logger);
+			corsPolicyBuilder.ConfigureCorsHeaders(corsConfiguration, logger);
+			corsPolicyBuilder.ConfigureCorsCredentials(corsConfiguration, logger);
+
+			logger.LogWarning("{ConfigurationName} enabled.", "Default CORS policy");
 		}));
+
+		logger.LogWarning("{ConfigurationName} configured.", "Default CORS policy");
 	}
 
 	private static IEnumerable<Type> GetAllStronglyTypedIds()
