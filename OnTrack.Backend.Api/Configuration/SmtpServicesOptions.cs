@@ -25,7 +25,6 @@ public sealed class SmtpServicesOptions : IOptionsSection
 	[RequiredWhenSmtpEmailServicesEnabled]
 	public SecurityProtocolType SecurityProtocol { get; set; } = SecurityProtocolType.Tls12;
 
-	[JsonIgnore]
 	[RequiredWhenSmtpEmailServicesEnabled]
 	public string UserName { get; set; }
 
