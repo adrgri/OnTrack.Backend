@@ -1,15 +1,16 @@
-﻿using System.Net;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Net;
 using System.Text.Json.Serialization;
 
 using OnTrack.Backend.Api.ComponentModel.DataAnnotations;
 
 namespace OnTrack.Backend.Api.Configuration;
 
-public sealed class SmtpEmailServicesOptions : IOptionsSection
+public sealed class SmtpServicesOptions : IOptionsSection
 {
 	public static string SectionKey => "Smtp";
 
-	[JsonIgnore]
+	[Required]
 	public bool Enabled { get; set; }
 
 	[RequiredWhenSmtpEmailServicesEnabled]

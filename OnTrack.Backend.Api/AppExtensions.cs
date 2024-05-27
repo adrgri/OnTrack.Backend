@@ -64,7 +64,7 @@ internal static class AppExtensions
 
 	private static void ConfigureSmtpEmailServicesOptions(this WebApplicationBuilder builder)
 	{
-		builder.Services.AddOptions<SmtpEmailServicesOptions>()
+		builder.Services.AddOptions<SmtpServicesOptions>()
 			.Bind(builder.Configuration.GetRequiredSection(ConfigurationSectionKeys.Smtp))
 			.ValidateDataAnnotations()
 			.ValidateOnStart();
@@ -74,7 +74,7 @@ internal static class AppExtensions
 	{
 		IDictionary<string, Action> optionsToConfigure = new Dictionary<string, Action>()
 		{
-			{ nameof(SmtpEmailServicesOptions), builder.ConfigureSmtpEmailServicesOptions }
+			{ nameof(SmtpServicesOptions), builder.ConfigureSmtpEmailServicesOptions },
 		};
 
 		ConfigurationWrapper(() =>
@@ -336,9 +336,9 @@ internal static class AppExtensions
 	{
 		ConfigurationWrapper(() =>
 		{
-			SmtpEmailServicesOptions? smtpEmailServicesOptions = builder.Configuration
+			SmtpServicesOptions? smtpEmailServicesOptions = builder.Configuration
 				.GetSection(ConfigurationSectionKeys.Smtp)
-				.Get<SmtpEmailServicesOptions>();
+				.Get<SmtpServicesOptions>();
 
 			logger.LogInformation("SMTP Email Services {SmtpEmailServicesEnabled}.", smtpEmailServicesOptions?.Enabled == true ? "Enabled" : "Disabled");
 

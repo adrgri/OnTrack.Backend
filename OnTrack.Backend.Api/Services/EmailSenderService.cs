@@ -11,10 +11,10 @@ namespace OnTrack.Backend.Api.Services;
 public sealed class EmailSenderService<TUser> : IEmailSender<TUser>
 	where TUser : class
 {
-	private readonly SmtpEmailServicesOptions _options;
+	private readonly SmtpServicesOptions _options;
 
 	// TODO: Add logging of send emails
-	public EmailSenderService(IOptions<SmtpEmailServicesOptions> options)
+	public EmailSenderService(IOptions<SmtpServicesOptions> options)
 	{
 		_options = options.Value;
 
