@@ -8,7 +8,7 @@ namespace OnTrack.Backend.Api.Controllers;
 
 [ApiController, Route("/api/identity")]
 public sealed class IdentityController(SignInManager<AppUser> signInManager)
-	: Controller
+	: ControllerBase
 {
 	private readonly SignInManager<AppUser> _signInManager = signInManager;
 

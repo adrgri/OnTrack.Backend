@@ -35,5 +35,5 @@ try
 finally
 {
 	Log.Information("Disposing the logger.");
-	Log.CloseAndFlush();
+	await Log.CloseAndFlushAsync();
 }

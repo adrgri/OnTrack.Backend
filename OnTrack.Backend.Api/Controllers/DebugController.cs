@@ -1,4 +1,5 @@
 ﻿#if DEBUG
+#pragma warning disable S6968 // Actions that return a value should be annotated with ProducesResponseTypeAttribute containing the return type
 
 using System.Diagnostics;
 using System.Reflection;
