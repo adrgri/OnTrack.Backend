@@ -2,19 +2,12 @@
   "dependencies": {
     "mssql1": {
       "type": "mssql",
-      "connectionId": "ConnectionStrings:SqlDatabase"
-    },
-    "mssql2": {
-      "type": "mssql",
-      "connectionId": "ConnectionStrings:AzureSqlDatabase"
+      "connectionId": "Connections:SqlDatabase",
+      "dynamicId": null
     },
     "appInsights1": {
       "type": "appInsights",
-      "connectionId": "APPLICATIONINSIGHTS_CONNECTION_STRING",
       "dynamicId": null
-    },
-    "apis1": {
-      "type": "apis"
     }
   }
 }
